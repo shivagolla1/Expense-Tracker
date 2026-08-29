@@ -1,17 +1,18 @@
 /**
- * AAKRUTHEE - Cash Engine & Strict Lock Security
+ * AAKRUTHEE - Cash Engine, WebAuthn Passkeys & iOS App Switcher Security
  */
 
 (function () {
   'use strict';
 
   const STORAGE_KEYS = {
-    PROJECTS: 'aakruthee_projects_v5',
-    TRANSACTIONS: 'aakruthee_transactions_v5',
-    APP_PIN: 'aakruthee_app_pin_v5'
+    PROJECTS: 'aakruthee_projects_v6',
+    TRANSACTIONS: 'aakruthee_transactions_v6',
+    APP_PIN: 'aakruthee_app_pin_v6',
+    WEBAUTHN_ID: 'aakruthee_webauthn_cred_v6'
   };
 
-  const DEFAULT_PIN = '123456'; // Default 6-digit passcode
+  const DEFAULT_PIN = '123456';
 
   const DEFAULT_PROJECTS = [
     {
@@ -119,6 +120,7 @@
       this.bindEvents();
       this.render();
       this.checkOfflineStatus();
+      this.initAppLifecycleSecurity();
       this.initStrictLock();
     }
 
@@ -151,7 +153,8 @@
     }
 
     cacheDOMElements() {
-      // Lock elements
+      // Security Elements
+      this.privacyShield = document.getElementById('privacy-shield');
       this.appleLockScreen = document.getElementById('apple-lock-screen');
       this.btnUnlockApp = document.getElementById('btn-unlock-app');
       this.btnManualLock = document.getElementById('btn-manual-lock');
@@ -266,29 +269,65 @@
       });
     }
 
-    // STRICT LOCK LOGIC
-    initStrictLock() {
+    // iOS APP SWITCHER & LIFECYCLE SECURITY (visibilitychange)
+    initAppLifecycleSecurity() {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+          // App minimized or swiped to App Switcher -> Mask UI immediately
+          this.lockAppSilently();
+        } else if (document.visibilityState === 'visible') {
+          // App returned to foreground -> Re-authenticate WebAuthn Face ID
+          this.triggerSystemUnlock();
+        }
+      });
+
+      window.addEventListener('pagehide', () => this.lockAppSilently());
+      window.addEventListener('blur', () => this.lockAppSilently());
+    }
+
+    lockAppSilently() {
       this.isUnlocked = false;
+      this.privacyShield.classList.add('active');
       this.appleLockScreen.classList.add('active');
+      this.btnUnlockApp.style.display = 'flex';
+      this.pinContainer.style.display = 'none';
+    }
+
+    // WEBAUTHN PASSKEYS & SYSTEM UNLOCK
+    initStrictLock() {
+      this.lockAppSilently();
       this.triggerSystemUnlock();
     }
 
     async triggerSystemUnlock() {
-      // WebAuthn Biometric Attempt
+      // Attempt WebAuthn Passkey / Biometrics
       try {
         if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
           const isAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
           if (isAvailable && location.protocol === 'https:') {
-            // Invokes native Face ID / Passcode prompt
+            // Biometric / Passkey Verification
+            const challenge = new Uint8Array(32);
+            window.crypto.getRandomValues(challenge);
+
+            const options = {
+              publicKey: {
+                challenge,
+                timeout: 60000,
+                userVerification: 'required',
+                rpId: location.hostname
+              }
+            };
+
+            await navigator.credentials.get(options);
             this.unlockAppSuccess();
             return;
           }
         }
       } catch (err) {
-        console.log('Biometrics failed, falling back to PIN pad', err);
+        console.log('WebAuthn biometrics error/canceled', err);
       }
 
-      // Show PIN Keypad fallback if biometrics not available or failed
+      // Fallback to PIN Keypad if WebAuthn unavailable or canceled
       this.showPinKeypad();
     }
 
@@ -350,14 +389,11 @@
     unlockAppSuccess() {
       this.isUnlocked = true;
       this.appleLockScreen.classList.remove('active');
+      this.privacyShield.classList.remove('active');
     }
 
     lockApp() {
-      this.isUnlocked = false;
-      this.appleLockScreen.classList.add('active');
-      this.btnUnlockApp.style.display = 'flex';
-      this.pinContainer.style.display = 'none';
-      this.lockStatusText.textContent = 'Authenticate to open app';
+      this.lockAppSilently();
     }
 
     switchTab(tabId) {

@@ -12,6 +12,17 @@
 <body>
   <div id="app" class="app-container">
     
+    <!-- PRIVACY SHIELD FOR iOS APP SWITCHER PREVIEW PROTECTION -->
+    <div class="privacy-shield active" id="privacy-shield">
+      <div class="shield-content">
+        <div class="lock-icon-badge">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h1 class="lock-title">Aakruthee</h1>
+        <p class="lock-subtitle">Protected View</p>
+      </div>
+    </div>
+
     <!-- SYSTEM LOCK SCREEN OVERLAY -->
     <div class="apple-lock-screen active" id="apple-lock-screen">
       <div class="lock-content">
@@ -51,7 +62,7 @@
       </div>
     </div>
 
-    <!-- Header (No Apple Logo) -->
+    <!-- Header -->
     <header class="app-header">
       <div class="brand">
         <div class="brand-text">
@@ -74,7 +85,7 @@
     <!-- Main Content Area -->
     <main class="main-content">
 
-      <!-- TAB 1: MONEY IN / MONEY OUT HOME VIEW (PURE HERO BUTTONS - NO AMOUNTS / NO SUMMARY) -->
+      <!-- TAB 1: MONEY IN / MONEY OUT HOME VIEW -->
       <section id="view-quick-entry" class="tab-view active">
         <div class="apple-hero-container">
           <div class="hero-welcome-text">
@@ -82,7 +93,6 @@
             <p>Log payments or expenses instantly</p>
           </div>
 
-          <!-- PURE LARGE APPLE HERO BUTTONS -->
           <div class="hero-buttons-wrapper">
             <button class="apple-hero-btn btn-money-in" id="hero-btn-inflow">
               <div class="btn-icon-wrapper">
@@ -128,7 +138,6 @@
           <h2>Activity</h2>
         </div>
 
-        <!-- Apple Style Segmented Control -->
         <div class="apple-segmented-control" id="activity-filter-pills">
           <button class="segment active" data-filter="all">All</button>
           <button class="segment" data-filter="inflow">Inflow</button>
@@ -150,7 +159,6 @@
           </button>
         </div>
 
-        <!-- Apple Style Project Hero Card -->
         <div class="apple-card project-hero-card">
           <div class="proj-header-info">
             <h2 id="full-proj-title">Project Name</h2>
@@ -185,7 +193,6 @@
           </div>
         </div>
 
-        <!-- Full Project Activity List -->
         <div class="project-tx-section">
           <h3>Project Transactions</h3>
           <div class="apple-group-list" id="full-project-tx-list">

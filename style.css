@@ -1,5 +1,5 @@
 /* ==========================================================================
-   AAKRUTHEE - Cash Engine & Secure Lock System
+   AAKRUTHEE - Cash Engine, Privacy Shield & WebAuthn Security
    ========================================================================== */
 
 :root {
@@ -16,7 +16,7 @@
   --apple-text-secondary: #86868b;
   --apple-text-tertiary: #a1a1a6;
   
-  /* Official Colors */
+  /* Colors */
   --apple-blue: #0071e3;
   --apple-blue-hover: #0077ed;
   
@@ -71,6 +71,40 @@ body {
   position: relative;
   padding-bottom: 84px;
   box-shadow: 0 0 50px rgba(0, 0, 0, 0.06);
+}
+
+/* PRIVACY SHIELD FOR iOS APP SWITCHER PREVIEW PROTECTION */
+.privacy-shield {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 440px;
+  height: 100%;
+  background: rgba(245, 245, 247, 0.98);
+  backdrop-filter: blur(35px) saturate(200%);
+  -webkit-backdrop-filter: blur(35px) saturate(200%);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.privacy-shield.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.shield-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
 }
 
 /* SYSTEM LOCK SCREEN OVERLAY */
@@ -233,7 +267,7 @@ body {
   color: var(--apple-text);
 }
 
-/* Light Frosted Header */
+/* Light Header */
 .app-header {
   padding: 14px 20px;
   display: flex;
