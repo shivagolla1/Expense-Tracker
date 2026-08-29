@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Atelier Flow - Designer Cash Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app" class="app-container">
+    
+    <!-- Apple Style Header -->
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-logo"></span>
+        <div class="brand-text">
+          <h1>Atelier Flow</h1>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="offline-badge" id="offline-status" title="Offline Ready">
+          <span class="dot"></span> Offline Ready
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+      <!-- TAB 1: MONEY IN / MONEY OUT HOME VIEW (PURE HERO BUTTONS - NO AMOUNTS / NO SUMMARY) -->
+      <section id="view-quick-entry" class="tab-view active">
+        <div class="apple-hero-container">
+          <div class="hero-welcome-text">
+            <h2>Select Action</h2>
+            <p>Log payments or expenses instantly</p>
+          </div>
+
+          <!-- PURE LARGE APPLE HERO BUTTONS -->
+          <div class="hero-buttons-wrapper">
+            <button class="apple-hero-btn btn-money-in" id="hero-btn-inflow">
+              <div class="btn-icon-wrapper">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+              </div>
+              <div class="btn-text-wrapper">
+                <span class="btn-title">+ Money In</span>
+                <span class="btn-subtitle">Client Advance or Commission</span>
+              </div>
+            </button>
+
+            <button class="apple-hero-btn btn-money-out" id="hero-btn-outflow">
+              <div class="btn-icon-wrapper">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+              </div>
+              <div class="btn-text-wrapper">
+                <span class="btn-title">- Money Out</span>
+                <span class="btn-subtitle">Materials, Labor or Vendor Pay</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: PROJECTS DASHBOARD -->
+      <section id="view-dashboard" class="tab-view">
+        <div class="apple-page-header">
+          <div>
+            <h2>Projects</h2>
+            <span class="page-subtitle">Track project balance funds</span>
+          </div>
+          <button class="apple-btn-primary" id="dashboard-add-proj-btn">+ New Project</button>
+        </div>
+
+        <div class="apple-projects-list" id="dashboard-projects-grid">
+          <!-- Dynamically populated project cards -->
+        </div>
+      </section>
+
+      <!-- TAB 3: RECENT ACTIVITY FEED -->
+      <section id="view-activity" class="tab-view">
+        <div class="apple-page-header">
+          <h2>Activity</h2>
+        </div>
+
+        <!-- Apple Style Segmented Control -->
+        <div class="apple-segmented-control" id="activity-filter-pills">
+          <button class="segment active" data-filter="all">All</button>
+          <button class="segment" data-filter="inflow">Inflow</button>
+          <button class="segment" data-filter="outflow">Outflow</button>
+          <button class="segment" data-filter="commission">Commission</button>
+        </div>
+
+        <div class="apple-group-list" id="activity-transaction-list">
+          <!-- Dynamically populated transaction feed -->
+        </div>
+      </section>
+
+      <!-- FULL PAGE VIEW: SINGLE PROJECT DRILLDOWN -->
+      <section id="view-project-detail" class="tab-view full-page-view">
+        <div class="detail-top-nav">
+          <button class="apple-back-btn" id="btn-back-to-dashboard">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            Projects
+          </button>
+        </div>
+
+        <!-- Apple Style Project Hero Card -->
+        <div class="apple-card project-hero-card">
+          <div class="proj-header-info">
+            <h2 id="full-proj-title">Project Name</h2>
+            <span class="proj-client-subtitle" id="full-proj-client">Client Name</span>
+          </div>
+
+          <div class="apple-balance-display">
+            <span class="balance-label">Remaining Fund Balance</span>
+            <div class="balance-amount" id="full-proj-balance">₹0</div>
+          </div>
+
+          <div class="apple-metrics-row">
+            <div class="metric-item">
+              <span class="lbl">Client Advances</span>
+              <span class="val text-green" id="full-proj-advances">₹0</span>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric-item">
+              <span class="lbl">Total Spent</span>
+              <span class="val text-red" id="full-proj-expenses">₹0</span>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric-item">
+              <span class="lbl">Commissions</span>
+              <span class="val text-amber" id="full-proj-commissions">₹0</span>
+            </div>
+          </div>
+
+          <div class="proj-quick-actions">
+            <button class="apple-action-btn btn-inflow-sm" id="full-proj-btn-inflow">+ Money In</button>
+            <button class="apple-action-btn btn-outflow-sm" id="full-proj-btn-outflow">- Money Out</button>
+          </div>
+        </div>
+
+        <!-- Full Project Activity List -->
+        <div class="project-tx-section">
+          <h3>Project Transactions</h3>
+          <div class="apple-group-list" id="full-project-tx-list">
+            <!-- Project specific transactions -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- APPLE BOTTOM NAVIGATOR BAR -->
+    <nav class="apple-bottom-nav">
+      <button class="nav-item active" data-tab="view-quick-entry">
+        <div class="nav-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <span>Quick Entry</span>
+      </button>
+
+      <button class="nav-item" data-tab="view-dashboard">
+        <div class="nav-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        </div>
+        <span>Projects</span>
+      </button>
+
+      <button class="nav-item" data-tab="view-activity">
+        <div class="nav-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        </div>
+        <span>Activity</span>
+      </button>
+    </nav>
+
+    <!-- APPLE SLIDE-UP BOTTOM SHEET: MONEY IN -->
+    <div class="bottom-sheet-overlay" id="sheet-inflow-overlay">
+      <div class="bottom-sheet" id="sheet-inflow">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <h3>Record Money In</h3>
+          <button class="close-sheet" data-close="sheet-inflow-overlay">&times;</button>
+        </div>
+        
+        <form id="form-inflow" class="sheet-form">
+          <div class="form-group">
+            <label class="form-label">Transaction Type</label>
+            <div class="apple-type-segmented">
+              <input type="radio" id="type-client-payment" name="inflow_type" value="client_payment" checked>
+              <label for="type-client-payment" class="segmented-btn">Client Payment</label>
+
+              <input type="radio" id="type-vendor-commission" name="inflow_type" value="vendor_commission">
+              <label for="type-vendor-commission" class="segmented-btn">Vendor Commission</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inflow-amount">Amount (₹)</label>
+            <div class="input-with-symbol">
+              <span class="currency-symbol">₹</span>
+              <input type="number" id="inflow-amount" placeholder="0" step="any" inputmode="decimal" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Select Project</label>
+            <div class="chip-selector" id="inflow-project-chips"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Payment Mode</label>
+            <div class="mode-chips">
+              <input type="radio" id="in-mode-upi" name="inflow_mode" value="UPI" checked>
+              <label for="in-mode-upi" class="mode-chip">UPI / GPay</label>
+              
+              <input type="radio" id="in-mode-bank" name="inflow_mode" value="Bank Transfer">
+              <label for="in-mode-bank" class="mode-chip">Bank Transfer</label>
+
+              <input type="radio" id="in-mode-cash" name="inflow_mode" value="Cash">
+              <label for="in-mode-cash" class="mode-chip">Cash</label>
+
+              <input type="radio" id="in-mode-cheque" name="inflow_mode" value="Cheque">
+              <label for="in-mode-cheque" class="mode-chip">Cheque</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inflow-note">Note / Vendor Name (Optional)</label>
+            <input type="text" id="inflow-note" placeholder="e.g. Advance payment / 5% Cashback">
+          </div>
+
+          <button type="submit" class="apple-submit-btn btn-submit-inflow">
+            Save Money In
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- APPLE SLIDE-UP BOTTOM SHEET: MONEY OUT -->
+    <div class="bottom-sheet-overlay" id="sheet-outflow-overlay">
+      <div class="bottom-sheet" id="sheet-outflow">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <h3>Record Money Out</h3>
+          <button class="close-sheet" data-close="sheet-outflow-overlay">&times;</button>
+        </div>
+
+        <form id="form-outflow" class="sheet-form">
+          <div class="form-group">
+            <label class="form-label" for="outflow-amount">Amount (₹)</label>
+            <div class="input-with-symbol">
+              <span class="currency-symbol">₹</span>
+              <input type="number" id="outflow-amount" placeholder="0" step="any" inputmode="decimal" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Select Project</label>
+            <div class="chip-selector" id="outflow-project-chips"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <div class="category-grid">
+              <input type="radio" id="cat-materials" name="outflow_cat" value="Materials" checked>
+              <label for="cat-materials" class="cat-chip">📦 Materials</label>
+
+              <input type="radio" id="cat-labor" name="outflow_cat" value="Site Labor">
+              <label for="cat-labor" class="cat-chip">🔨 Labor</label>
+
+              <input type="radio" id="cat-contractor" name="outflow_cat" value="Subcontractor">
+              <label for="cat-contractor" class="cat-chip">⚡ Electric/Plumb</label>
+
+              <input type="radio" id="cat-logistics" name="outflow_cat" value="Logistics">
+              <label for="cat-logistics" class="cat-chip">🚚 Transport</label>
+
+              <input type="radio" id="cat-decor" name="outflow_cat" value="Furniture & Decor">
+              <label for="cat-decor" class="cat-chip">🛋️ Furniture</label>
+
+              <input type="radio" id="cat-studio" name="outflow_cat" value="Studio Overhead">
+              <label for="cat-studio" class="cat-chip">🏛️ Studio</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Paid Via</label>
+            <div class="mode-chips">
+              <input type="radio" id="out-mode-upi" name="outflow_mode" value="UPI" checked>
+              <label for="out-mode-upi" class="mode-chip">UPI</label>
+              
+              <input type="radio" id="out-mode-cash" name="outflow_mode" value="Cash">
+              <label for="out-mode-cash" class="mode-chip">Cash</label>
+
+              <input type="radio" id="out-mode-card" name="outflow_mode" value="Card">
+              <label for="out-mode-card" class="mode-chip">Card</label>
+
+              <input type="radio" id="out-mode-bank" name="outflow_mode" value="Net Banking">
+              <label for="out-mode-bank" class="mode-chip">Bank</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="outflow-note">Vendor / Paid To (Optional)</label>
+            <input type="text" id="outflow-note" placeholder="e.g. Marble Supplier, Cash to Carpenter">
+          </div>
+
+          <button type="submit" class="apple-submit-btn btn-submit-outflow">
+            Save Money Out
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- NEW PROJECT MODAL -->
+    <div class="bottom-sheet-overlay" id="sheet-project-overlay">
+      <div class="bottom-sheet" id="sheet-project">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <h3>Create New Project</h3>
+          <button class="close-sheet" data-close="sheet-project-overlay">&times;</button>
+        </div>
+
+        <form id="form-project" class="sheet-form">
+          <div class="form-group">
+            <label class="form-label" for="proj-name">Project Name</label>
+            <input type="text" id="proj-name" placeholder="e.g. Penthouse 42" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="proj-client">Client Name</label>
+            <input type="text" id="proj-client" placeholder="e.g. Rajesh Sharma" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="proj-budget">Estimated Budget (Optional)</label>
+            <div class="input-with-symbol">
+              <span class="currency-symbol">₹</span>
+              <input type="number" id="proj-budget" placeholder="0" step="any">
+            </div>
+          </div>
+
+          <button type="submit" class="apple-submit-btn">
+            Create Project
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
