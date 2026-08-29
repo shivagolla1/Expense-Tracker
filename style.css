@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ATELIER FLOW - Official Apple Website Light Aesthetic & Lock System
+   AAKRUTHEE - Cash Engine & Secure Lock System
    ========================================================================== */
 
 :root {
@@ -16,7 +16,7 @@
   --apple-text-secondary: #86868b;
   --apple-text-tertiary: #a1a1a6;
   
-  /* Official Apple Light Colors */
+  /* Official Colors */
   --apple-blue: #0071e3;
   --apple-blue-hover: #0077ed;
   
@@ -63,7 +63,7 @@ body {
 
 .app-container {
   width: 100%;
-  max-width: 440px; /* iPhone Pro style container */
+  max-width: 440px;
   min-height: 100vh;
   background-color: var(--apple-bg);
   display: flex;
@@ -73,7 +73,7 @@ body {
   box-shadow: 0 0 50px rgba(0, 0, 0, 0.06);
 }
 
-/* APPLE SYSTEM LOCK SCREEN OVERLAY */
+/* SYSTEM LOCK SCREEN OVERLAY */
 .apple-lock-screen {
   position: fixed;
   top: 0;
@@ -82,7 +82,7 @@ body {
   width: 100%;
   max-width: 440px;
   height: 100%;
-  background: rgba(245, 245, 247, 0.92);
+  background: rgba(245, 245, 247, 0.96);
   backdrop-filter: blur(25px) saturate(180%);
   -webkit-backdrop-filter: blur(25px) saturate(180%);
   z-index: 500;
@@ -106,13 +106,19 @@ body {
   text-align: center;
   padding: 30px;
   gap: 12px;
+  width: 100%;
 }
 
-.lock-apple-logo {
-  font-size: 56px;
+.lock-icon-badge {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #e5e5ea;
   color: var(--apple-text);
-  line-height: 1;
-  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
 }
 
 .lock-title {
@@ -126,7 +132,7 @@ body {
   font-size: 15px;
   color: var(--apple-text-secondary);
   font-weight: 400;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .lock-unlock-btn {
@@ -139,6 +145,75 @@ body {
   font-size: 15px;
   font-weight: 600;
   box-shadow: 0 4px 16px rgba(0, 113, 227, 0.25);
+}
+
+/* PIN KEYPAD FALLBACK */
+.pin-lock-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.pin-dots {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.pin-dots .dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--apple-text-secondary);
+  background: transparent;
+  transition: var(--transition-apple);
+}
+
+.pin-dots .dot.filled {
+  background: var(--apple-text);
+  border-color: var(--apple-text);
+}
+
+.pin-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  max-width: 280px;
+}
+
+.pin-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid var(--apple-border);
+  color: var(--apple-text);
+  font-family: var(--font-apple);
+  font-size: 22px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: var(--transition-apple);
+}
+
+.pin-btn:active {
+  background: #e5e5ea;
+  transform: scale(0.92);
+}
+
+.pin-btn.pin-action {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--apple-text-secondary);
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .lock-icon-btn {
@@ -158,7 +233,7 @@ body {
   color: var(--apple-text);
 }
 
-/* Apple Light Frosted Header */
+/* Light Frosted Header */
 .app-header {
   padding: 14px 20px;
   display: flex;
@@ -179,15 +254,9 @@ body {
   gap: 10px;
 }
 
-.brand-logo {
-  font-size: 22px;
-  color: var(--apple-text);
-  line-height: 1;
-}
-
 .brand-text h1 {
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 19px;
+  font-weight: 700;
   color: var(--apple-text);
   letter-spacing: -0.02em;
 }
@@ -242,7 +311,7 @@ body {
   to { opacity: 1; transform: scale(1); }
 }
 
-/* TAB 1: PURE APPLE LIGHT HERO HOME VIEW (NO AMOUNTS / NO SUMMARY) */
+/* TAB 1: PURE HERO HOME VIEW */
 .apple-hero-container {
   display: flex;
   flex-direction: column;
@@ -369,7 +438,7 @@ body {
   font-weight: 400;
 }
 
-/* TAB 2: APPLE DASHBOARD & MINIMALIST PROJECTS (NAME & OWNER ONLY) */
+/* TAB 2: PROJECTS DASHBOARD */
 .apple-page-header {
   display: flex;
   align-items: flex-end;
@@ -412,7 +481,6 @@ body {
   gap: 12px;
 }
 
-/* MINIMALIST PROJECT CARD - NAME AND OWNER ONLY (NO AMOUNTS) */
 .apple-project-card-minimal {
   background: var(--apple-white);
   border: 1px solid var(--apple-border);
@@ -456,7 +524,7 @@ body {
   color: var(--apple-text-tertiary);
 }
 
-/* TAB 3: ACTIVITY FEED & APPLE LIGHT SEGMENTED CONTROL */
+/* TAB 3: ACTIVITY FEED */
 .apple-segmented-control {
   background: #e5e5ea;
   border-radius: var(--radius-capsule);
@@ -642,7 +710,7 @@ body {
   margin-bottom: 10px;
 }
 
-/* APPLE LIGHT BOTTOM NAVIGATOR BAR */
+/* BOTTOM NAVIGATOR BAR */
 .apple-bottom-nav {
   position: fixed;
   bottom: 0;
@@ -682,7 +750,7 @@ body {
   font-weight: 500;
 }
 
-/* APPLE LIGHT SLIDE-UP BOTTOM SHEET MODALS */
+/* SLIDE-UP BOTTOM SHEET MODALS */
 .bottom-sheet-overlay {
   position: fixed;
   top: 0;

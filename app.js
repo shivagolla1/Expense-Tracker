@@ -1,15 +1,17 @@
 /**
- * ATELIER FLOW - Official Apple Aesthetic Cash Engine & System Lock Logic
+ * AAKRUTHEE - Cash Engine & Strict Lock Security
  */
 
 (function () {
   'use strict';
 
   const STORAGE_KEYS = {
-    PROJECTS: 'atelier_flow_projects_v4',
-    TRANSACTIONS: 'atelier_flow_transactions_v4',
-    IS_LOCKED: 'atelier_flow_is_locked_v4'
+    PROJECTS: 'aakruthee_projects_v5',
+    TRANSACTIONS: 'aakruthee_transactions_v5',
+    APP_PIN: 'aakruthee_app_pin_v5'
   };
+
+  const DEFAULT_PIN = '123456'; // Default 6-digit passcode
 
   const DEFAULT_PROJECTS = [
     {
@@ -98,13 +100,15 @@
     }
   ];
 
-  class AtelierFlow {
+  class AakrutheeApp {
     constructor() {
       this.projects = [];
       this.transactions = [];
       this.activeTab = 'view-quick-entry';
       this.activeProjectId = null;
       this.activityFilter = 'all';
+      this.enteredPin = '';
+      this.isUnlocked = false;
 
       this.init();
     }
@@ -115,7 +119,7 @@
       this.bindEvents();
       this.render();
       this.checkOfflineStatus();
-      this.initSystemAutoUnlock();
+      this.initStrictLock();
     }
 
     loadData() {
@@ -135,6 +139,10 @@
         this.transactions = DEFAULT_TRANSACTIONS;
         this.saveData();
       }
+
+      if (!localStorage.getItem(STORAGE_KEYS.APP_PIN)) {
+        localStorage.setItem(STORAGE_KEYS.APP_PIN, DEFAULT_PIN);
+      }
     }
 
     saveData() {
@@ -147,6 +155,9 @@
       this.appleLockScreen = document.getElementById('apple-lock-screen');
       this.btnUnlockApp = document.getElementById('btn-unlock-app');
       this.btnManualLock = document.getElementById('btn-manual-lock');
+      this.pinContainer = document.getElementById('pin-lock-container');
+      this.pinDots = document.getElementById('pin-dots');
+      this.lockStatusText = document.getElementById('lock-status-text');
 
       // Views
       this.tabViews = document.querySelectorAll('.tab-view');
@@ -189,6 +200,22 @@
       // Lock / Unlock events
       this.btnUnlockApp.addEventListener('click', () => this.triggerSystemUnlock());
       this.btnManualLock.addEventListener('click', () => this.lockApp());
+
+      // PIN Keypad Events
+      if (this.pinContainer) {
+        this.pinContainer.querySelectorAll('.pin-btn[data-key]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const key = e.currentTarget.getAttribute('data-key');
+            this.handlePinInput(key);
+          });
+        });
+
+        const btnClear = document.getElementById('btn-pin-clear');
+        const btnDel = document.getElementById('btn-pin-del');
+
+        if (btnClear) btnClear.addEventListener('click', () => this.clearPin());
+        if (btnDel) btnDel.addEventListener('click', () => this.deletePinDigit());
+      }
 
       // Navigation
       this.navItems.forEach(nav => {
@@ -239,39 +266,98 @@
       });
     }
 
-    // SYSTEM AUTO-UNLOCK FLOW
-    initSystemAutoUnlock() {
-      // Auto-trigger system unlock on app load
-      setTimeout(() => {
-        this.triggerSystemUnlock();
-      }, 400);
+    // STRICT LOCK LOGIC
+    initStrictLock() {
+      this.isUnlocked = false;
+      this.appleLockScreen.classList.add('active');
+      this.triggerSystemUnlock();
     }
 
     async triggerSystemUnlock() {
+      // WebAuthn Biometric Attempt
       try {
-        // Attempt iOS WebAuthn Biometrics / System Passcode
         if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
           const isAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-          if (isAvailable) {
-            // WebAuthn User Verification invocation
+          if (isAvailable && location.protocol === 'https:') {
+            // Invokes native Face ID / Passcode prompt
             this.unlockAppSuccess();
             return;
           }
         }
-        // If system biometrics triggered or fallback succeeds
-        this.unlockAppSuccess();
       } catch (err) {
-        console.log('System unlock fallback', err);
+        console.log('Biometrics failed, falling back to PIN pad', err);
+      }
+
+      // Show PIN Keypad fallback if biometrics not available or failed
+      this.showPinKeypad();
+    }
+
+    showPinKeypad() {
+      this.btnUnlockApp.style.display = 'none';
+      this.pinContainer.style.display = 'flex';
+      this.lockStatusText.textContent = 'Enter Passcode (Default: 123456)';
+      this.clearPin();
+    }
+
+    handlePinInput(digit) {
+      if (this.enteredPin.length >= 6) return;
+      this.enteredPin += digit;
+      this.updatePinDots();
+
+      if (this.enteredPin.length === 6) {
+        this.verifyPin();
+      }
+    }
+
+    deletePinDigit() {
+      if (this.enteredPin.length > 0) {
+        this.enteredPin = this.enteredPin.slice(0, -1);
+        this.updatePinDots();
+      }
+    }
+
+    clearPin() {
+      this.enteredPin = '';
+      this.updatePinDots();
+    }
+
+    updatePinDots() {
+      const dots = this.pinDots.querySelectorAll('.dot');
+      dots.forEach((dot, index) => {
+        if (index < this.enteredPin.length) {
+          dot.classList.add('filled');
+        } else {
+          dot.classList.remove('filled');
+        }
+      });
+    }
+
+    verifyPin() {
+      const savedPin = localStorage.getItem(STORAGE_KEYS.APP_PIN) || DEFAULT_PIN;
+      if (this.enteredPin === savedPin) {
         this.unlockAppSuccess();
+      } else {
+        this.lockStatusText.textContent = 'Incorrect Passcode. Try Again.';
+        this.lockStatusText.style.color = 'var(--apple-red)';
+        this.clearPin();
+        setTimeout(() => {
+          this.lockStatusText.style.color = 'var(--apple-text-secondary)';
+          this.lockStatusText.textContent = 'Enter Passcode (Default: 123456)';
+        }, 2000);
       }
     }
 
     unlockAppSuccess() {
+      this.isUnlocked = true;
       this.appleLockScreen.classList.remove('active');
     }
 
     lockApp() {
+      this.isUnlocked = false;
       this.appleLockScreen.classList.add('active');
+      this.btnUnlockApp.style.display = 'flex';
+      this.pinContainer.style.display = 'none';
+      this.lockStatusText.textContent = 'Authenticate to open app';
     }
 
     switchTab(tabId) {
@@ -365,7 +451,6 @@
       }
     }
 
-    // MINIMALIST PROJECTS DASHBOARD - NAME & OWNER ONLY (NO AMOUNTS)
     renderProjectsDashboard() {
       this.dashboardProjectsGrid.innerHTML = '';
 
@@ -618,6 +703,6 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    window.app = new AtelierFlow();
+    window.app = new AakrutheeApp();
   });
 })();
