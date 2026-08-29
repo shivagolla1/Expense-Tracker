@@ -12,6 +12,20 @@
 <body>
   <div id="app" class="app-container">
     
+    <!-- APPLE SYSTEM LOCK SCREEN OVERLAY -->
+    <div class="apple-lock-screen active" id="apple-lock-screen">
+      <div class="lock-content">
+        <span class="lock-apple-logo"></span>
+        <h1 class="lock-title">Atelier Flow</h1>
+        <p class="lock-subtitle">App Locked</p>
+        
+        <button class="apple-btn-primary lock-unlock-btn" id="btn-unlock-app">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Unlock with Face ID / Passcode
+        </button>
+      </div>
+    </div>
+
     <!-- Apple Style Header -->
     <header class="app-header">
       <div class="brand">
@@ -21,6 +35,9 @@
         </div>
       </div>
       <div class="header-actions">
+        <button class="lock-icon-btn" id="btn-manual-lock" title="Lock App">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </button>
         <div class="offline-badge" id="offline-status" title="Offline Ready">
           <span class="dot"></span> Offline Ready
         </div>
@@ -68,13 +85,13 @@
         <div class="apple-page-header">
           <div>
             <h2>Projects</h2>
-            <span class="page-subtitle">Track project balance funds</span>
+            <span class="page-subtitle">Select project to view balance</span>
           </div>
           <button class="apple-btn-primary" id="dashboard-add-proj-btn">+ New Project</button>
         </div>
 
         <div class="apple-projects-list" id="dashboard-projects-grid">
-          <!-- Dynamically populated project cards -->
+          <!-- Dynamically populated project cards (Name & Owner only) -->
         </div>
       </section>
 
@@ -197,11 +214,12 @@
             </div>
           </div>
 
+          <!-- STRICT MOBILE DECIMAL NUMERIC KEYPAD -->
           <div class="form-group">
             <label class="form-label" for="inflow-amount">Amount (₹)</label>
             <div class="input-with-symbol">
               <span class="currency-symbol">₹</span>
-              <input type="number" id="inflow-amount" placeholder="0" step="any" inputmode="decimal" required>
+              <input type="number" id="inflow-amount" placeholder="0" step="any" inputmode="decimal" pattern="[0-9]*" required>
             </div>
           </div>
 
@@ -249,11 +267,12 @@
         </div>
 
         <form id="form-outflow" class="sheet-form">
+          <!-- STRICT MOBILE DECIMAL NUMERIC KEYPAD -->
           <div class="form-group">
             <label class="form-label" for="outflow-amount">Amount (₹)</label>
             <div class="input-with-symbol">
               <span class="currency-symbol">₹</span>
-              <input type="number" id="outflow-amount" placeholder="0" step="any" inputmode="decimal" required>
+              <input type="number" id="outflow-amount" placeholder="0" step="any" inputmode="decimal" pattern="[0-9]*" required>
             </div>
           </div>
 
@@ -330,15 +349,16 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="proj-client">Client Name</label>
+            <label class="form-label" for="proj-client">Client / Owner Name</label>
             <input type="text" id="proj-client" placeholder="e.g. Rajesh Sharma" required>
           </div>
 
+          <!-- STRICT MOBILE DECIMAL NUMERIC KEYPAD -->
           <div class="form-group">
             <label class="form-label" for="proj-budget">Estimated Budget (Optional)</label>
             <div class="input-with-symbol">
               <span class="currency-symbol">₹</span>
-              <input type="number" id="proj-budget" placeholder="0" step="any">
+              <input type="number" id="proj-budget" placeholder="0" step="any" inputmode="decimal" pattern="[0-9]*">
             </div>
           </div>
 
