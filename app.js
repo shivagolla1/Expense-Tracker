@@ -6,10 +6,10 @@
   'use strict';
 
   const STORAGE_KEYS = {
-    PROJECTS: 'aakruthee_projects_v6',
-    TRANSACTIONS: 'aakruthee_transactions_v6',
-    APP_PIN: 'aakruthee_app_pin_v6',
-    WEBAUTHN_ID: 'aakruthee_webauthn_cred_v6'
+    PROJECTS: 'aakruthee_projects_v7',
+    TRANSACTIONS: 'aakruthee_transactions_v7',
+    APP_PIN: 'aakruthee_app_pin_v7',
+    PASSKEY_CRED_ID: 'aakruthee_passkey_cred_id_v7'
   };
 
   const DEFAULT_PIN = '123456';
@@ -201,7 +201,7 @@
 
     bindEvents() {
       // Lock / Unlock events
-      this.btnUnlockApp.addEventListener('click', () => this.triggerSystemUnlock());
+      this.btnUnlockApp.addEventListener('click', () => this.handleUnlockButtonClick());
       this.btnManualLock.addEventListener('click', () => this.lockApp());
 
       // PIN Keypad Events
@@ -276,7 +276,7 @@
           // App minimized or swiped to App Switcher -> Mask UI immediately
           this.lockAppSilently();
         } else if (document.visibilityState === 'visible') {
-          // App returned to foreground -> Re-authenticate WebAuthn Face ID
+          // App returned to foreground -> Re-authenticate
           this.triggerSystemUnlock();
         }
       });
@@ -291,43 +291,135 @@
       this.appleLockScreen.classList.add('active');
       this.btnUnlockApp.style.display = 'flex';
       this.pinContainer.style.display = 'none';
+
+      const savedCredId = localStorage.getItem(STORAGE_KEYS.PASSKEY_CRED_ID);
+      if (savedCredId) {
+        this.btnUnlockApp.innerHTML = `
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 3H5a2 2 0 0 0-2 2v4m0 6v4a2 2 0 0 0 2 2h4m6 0h4a2 2 0 0 0 2-2v-4m0-6V5a2 2 0 0 0-2-2h-4"/></svg>
+          Unlock with Face ID / Passcode
+        `;
+        this.lockStatusText.textContent = 'Authenticate to open app';
+      } else {
+        this.btnUnlockApp.innerHTML = `
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 3H5a2 2 0 0 0-2 2v4m0 6v4a2 2 0 0 0 2 2h4m6 0h4a2 2 0 0 0 2-2v-4m0-6V5a2 2 0 0 0-2-2h-4"/></svg>
+          Set up Face ID / Touch ID
+        `;
+        this.lockStatusText.textContent = 'Register Face ID or use Passcode (123456)';
+      }
     }
 
-    // WEBAUTHN PASSKEYS & SYSTEM UNLOCK
     initStrictLock() {
       this.lockAppSilently();
       this.triggerSystemUnlock();
     }
 
-    async triggerSystemUnlock() {
-      // Attempt WebAuthn Passkey / Biometrics
+    async handleUnlockButtonClick() {
+      const savedCredId = localStorage.getItem(STORAGE_KEYS.PASSKEY_CRED_ID);
+      if (!savedCredId) {
+        // First Time: Create Passkey with Face ID
+        await this.registerPasskeyWithFaceID();
+      } else {
+        // Subsequent Opens: Verify existing Passkey with Face ID
+        await this.triggerSystemUnlock();
+      }
+    }
+
+    // STEP 1: REGISTER PASSKEY WITH FACE ID
+    async registerPasskeyWithFaceID() {
       try {
-        if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-          const isAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-          if (isAvailable && location.protocol === 'https:') {
-            // Biometric / Passkey Verification
-            const challenge = new Uint8Array(32);
-            window.crypto.getRandomValues(challenge);
+        if (!window.PublicKeyCredential) {
+          this.showPinKeypad();
+          return;
+        }
 
-            const options = {
-              publicKey: {
-                challenge,
-                timeout: 60000,
-                userVerification: 'required',
-                rpId: location.hostname
-              }
-            };
+        const challenge = new Uint8Array(32);
+        window.crypto.getRandomValues(challenge);
 
-            await navigator.credentials.get(options);
+        const userId = new Uint8Array(16);
+        window.crypto.getRandomValues(userId);
+
+        const createOptions = {
+          publicKey: {
+            challenge,
+            rp: { name: 'Aakruthee Cash Engine', id: location.hostname },
+            user: {
+              id: userId,
+              name: 'designer@aakruthee.com',
+              displayName: 'Interior Designer'
+            },
+            pubKeyCredParams: [
+              { alg: -7, type: 'public-key' },
+              { alg: -257, type: 'public-key' }
+            ],
+            timeout: 60000,
+            authenticatorSelection: {
+              authenticatorAttachment: 'platform',
+              userVerification: 'required'
+            }
+          }
+        };
+
+        const credential = await navigator.credentials.create(createOptions);
+        if (credential) {
+          // Convert Credential ID to Base64 String
+          const credIdStr = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+          localStorage.setItem(STORAGE_KEYS.PASSKEY_CRED_ID, credIdStr);
+          this.unlockAppSuccess();
+          return;
+        }
+      } catch (err) {
+        console.log('Passkey registration skipped or failed', err);
+      }
+
+      this.showPinKeypad();
+    }
+
+    // STEP 2: AUTHENTICATE WITH SAVED PASSKEY & FACE ID
+    async triggerSystemUnlock() {
+      const savedCredIdStr = localStorage.getItem(STORAGE_KEYS.PASSKEY_CRED_ID);
+      if (!savedCredIdStr) {
+        // No saved passkey yet, stay on button or show PIN keypad without throwing QR code error
+        return;
+      }
+
+      try {
+        if (window.PublicKeyCredential) {
+          const challenge = new Uint8Array(32);
+          window.crypto.getRandomValues(challenge);
+
+          // Convert stored Base64 string back to Uint8Array
+          const binaryStr = atob(savedCredIdStr);
+          const rawId = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) {
+            rawId[i] = binaryStr.charCodeAt(i);
+          }
+
+          const getOptions = {
+            publicKey: {
+              challenge,
+              timeout: 60000,
+              allowCredentials: [
+                {
+                  id: rawId,
+                  type: 'public-key',
+                  transports: ['internal']
+                }
+              ],
+              userVerification: 'required',
+              rpId: location.hostname
+            }
+          };
+
+          const assertion = await navigator.credentials.get(getOptions);
+          if (assertion) {
             this.unlockAppSuccess();
             return;
           }
         }
       } catch (err) {
-        console.log('WebAuthn biometrics error/canceled', err);
+        console.log('WebAuthn Passkey assertion error/canceled', err);
       }
 
-      // Fallback to PIN Keypad if WebAuthn unavailable or canceled
       this.showPinKeypad();
     }
 
