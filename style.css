@@ -1,5 +1,5 @@
 /* ==========================================================================
-   AAKRUTHEE - Cash Engine, Privacy Shield & WebAuthn Security
+   AAKRUTHEE - Cash Engine, Custom Logo & WebAuthn Security
    ========================================================================== */
 
 :root {
@@ -73,6 +73,23 @@ body {
   box-shadow: 0 0 50px rgba(0, 0, 0, 0.06);
 }
 
+/* BRAND LOGO STYLES */
+.brand-logo-img {
+  height: 30px;
+  width: auto;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.lock-brand-logo-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 18px;
+  object-fit: cover;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  margin-bottom: 8px;
+}
+
 /* PRIVACY SHIELD FOR iOS APP SWITCHER PREVIEW PROTECTION */
 .privacy-shield {
   position: fixed;
@@ -143,18 +160,6 @@ body {
   width: 100%;
 }
 
-.lock-icon-badge {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: #e5e5ea;
-  color: var(--apple-text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 6px;
-}
-
 .lock-title {
   font-size: 28px;
   font-weight: 700;
@@ -179,75 +184,6 @@ body {
   font-size: 15px;
   font-weight: 600;
   box-shadow: 0 4px 16px rgba(0, 113, 227, 0.25);
-}
-
-/* PIN KEYPAD FALLBACK */
-.pin-lock-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  margin-top: 10px;
-  width: 100%;
-}
-
-.pin-dots {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.pin-dots .dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 1.5px solid var(--apple-text-secondary);
-  background: transparent;
-  transition: var(--transition-apple);
-}
-
-.pin-dots .dot.filled {
-  background: var(--apple-text);
-  border-color: var(--apple-text);
-}
-
-.pin-keypad {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  max-width: 280px;
-}
-
-.pin-btn {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: #ffffff;
-  border: 1px solid var(--apple-border);
-  color: var(--apple-text);
-  font-family: var(--font-apple);
-  font-size: 22px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: var(--transition-apple);
-}
-
-.pin-btn:active {
-  background: #e5e5ea;
-  transform: scale(0.92);
-}
-
-.pin-btn.pin-action {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--apple-text-secondary);
-  background: transparent;
-  border: none;
-  box-shadow: none;
 }
 
 .lock-icon-btn {
