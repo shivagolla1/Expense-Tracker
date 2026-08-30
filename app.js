@@ -1,14 +1,14 @@
 /**
- * AAKRUTHEE - Cash Engine, Cloud REST Database Engine & WebAuthn Security
+ * AAKRUTHEE - Clean Production Cash Engine & Cloud PostgreSQL Sync
  */
 
 (function () {
   'use strict';
 
   const STORAGE_KEYS = {
-    PROJECTS: 'aakruthee_projects_v10',
-    TRANSACTIONS: 'aakruthee_transactions_v10',
-    PASSKEY_CRED_ID: 'aakruthee_passkey_cred_id_v10'
+    PROJECTS: 'aakruthee_projects_prod_v1',
+    TRANSACTIONS: 'aakruthee_transactions_prod_v1',
+    PASSKEY_CRED_ID: 'aakruthee_passkey_cred_id_prod_v1'
   };
 
   class AakrutheeApp {
@@ -30,8 +30,18 @@
       this.initAppLifecycleSecurity();
       this.initStrictLock();
 
-      // Load Data from Cloud API with local cache fallback
+      // Clear any legacy dummy data in browser memory
+      this.clearLegacyDummyCache();
+
+      // Load Clean Data from Cloud API with local cache fallback
       await this.loadCloudData();
+    }
+
+    clearLegacyDummyCache() {
+      // Clear old legacy keys containing sample data
+      ['aakruthee_projects_v10', 'aakruthee_transactions_v10', 'aakruthee_projects_v9', 'aakruthee_transactions_v9', 'aakruthee_projects_v8', 'aakruthee_transactions_v8', 'atelier_flow_projects_v4', 'atelier_flow_transactions_v4'].forEach(key => {
+        localStorage.removeItem(key);
+      });
     }
 
     // CLOUD API INTEGRATION
@@ -63,12 +73,15 @@
 
       if (storedProj && storedTx) {
         try {
-          this.projects = JSON.parse(storedProj);
-          this.transactions = JSON.parse(storedTx);
+          this.projects = JSON.parse(storedProj) || [];
+          this.transactions = JSON.parse(storedTx) || [];
         } catch (e) {
           this.projects = [];
           this.transactions = [];
         }
+      } else {
+        this.projects = [];
+        this.transactions = [];
       }
     }
 
@@ -336,7 +349,6 @@
         }
       } catch (err) {
         console.log('Passkey registration error:', err);
-        // Fallback for HTTP dev environments
         this.unlockAppSuccess();
       }
     }
@@ -384,7 +396,6 @@
         }
       } catch (err) {
         console.log('WebAuthn Passkey assertion error:', err);
-        // Fallback for HTTP dev environments
         this.unlockAppSuccess();
       }
     }
@@ -496,10 +507,12 @@
     renderProjectsDashboard() {
       this.dashboardProjectsGrid.innerHTML = '';
 
-      if (this.projects.length === 0) {
+      if (!this.projects || this.projects.length === 0) {
         this.dashboardProjectsGrid.innerHTML = `
-          <div style="text-align:center; padding:30px; color:var(--apple-text-secondary);">
-            No projects added yet. Tap "+ New Project" to get started!
+          <div style="text-align:center; padding:40px 20px; color:var(--apple-text-secondary);">
+            <div style="font-size:32px; margin-bottom:8px;">🏗️</div>
+            <div style="font-size:16px; font-weight:600; color:var(--apple-text); margin-bottom:4px;">No Projects Yet</div>
+            <div style="font-size:13px;">Tap "+ New Project" above to create your first client project!</div>
           </div>
         `;
         return;
@@ -565,6 +578,9 @@
 
     renderProjectChips() {
       const generateChipsHTML = (namePrefix) => {
+        if (!this.projects || this.projects.length === 0) {
+          return `<div style="font-size:13px; color:var(--apple-text-secondary);">Please create a project first!</div>`;
+        }
         return this.projects.map((p, idx) => `
           <input type="radio" id="${namePrefix}-proj-${p.id}" name="${namePrefix}_project" value="${p.id}" ${idx === 0 ? 'checked' : ''}>
           <label for="${namePrefix}-proj-${p.id}" class="project-chip-label">${this.escapeHTML(p.name)}</label>
@@ -660,8 +676,14 @@
       const amountVal = parseFloat(document.getElementById('inflow-amount').value);
       if (!amountVal || amountVal <= 0) return;
 
+      const selectedProj = this.formInflow.querySelector('input[name="inflow_project"]:checked');
+      if (!selectedProj) {
+        alert('Please create a project first before recording transactions!');
+        return;
+      }
+
       const type = this.formInflow.querySelector('input[name="inflow_type"]:checked').value;
-      const projectId = this.formInflow.querySelector('input[name="inflow_project"]:checked').value;
+      const projectId = selectedProj.value;
       const mode = this.formInflow.querySelector('input[name="inflow_mode"]:checked').value;
       const note = document.getElementById('inflow-note').value.trim();
 
@@ -686,7 +708,13 @@
       const amountVal = parseFloat(document.getElementById('outflow-amount').value);
       if (!amountVal || amountVal <= 0) return;
 
-      const projectId = this.formOutflow.querySelector('input[name="outflow_project"]:checked').value;
+      const selectedProj = this.formOutflow.querySelector('input[name="outflow_project"]:checked');
+      if (!selectedProj) {
+        alert('Please create a project first before recording transactions!');
+        return;
+      }
+
+      const projectId = selectedProj.value;
       const category = this.formOutflow.querySelector('input[name="outflow_cat"]:checked').value;
       const mode = this.formOutflow.querySelector('input[name="outflow_mode"]:checked').value;
       const note = document.getElementById('outflow-note').value.trim();
