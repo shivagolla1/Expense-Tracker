@@ -1,102 +1,15 @@
 /**
- * AAKRUTHEE - Cash Engine, Instant Auto-Unlock Native Face ID & iPhone System Security
+ * AAKRUTHEE - Cash Engine, Cloud REST Database Engine & WebAuthn Security
  */
 
 (function () {
   'use strict';
 
   const STORAGE_KEYS = {
-    PROJECTS: 'aakruthee_projects_v9',
-    TRANSACTIONS: 'aakruthee_transactions_v9',
-    PASSKEY_CRED_ID: 'aakruthee_passkey_cred_id_v9'
+    PROJECTS: 'aakruthee_projects_v10',
+    TRANSACTIONS: 'aakruthee_transactions_v10',
+    PASSKEY_CRED_ID: 'aakruthee_passkey_cred_id_v10'
   };
-
-  const DEFAULT_PROJECTS = [
-    {
-      id: 'proj-1',
-      name: 'Horizon Penthouse 42',
-      client: 'Mr. Rajesh Sharma',
-      budget: 15000000,
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: 'proj-2',
-      name: 'Oakwood Luxury Villa',
-      client: 'Ananya Deshmukh',
-      budget: 8500000,
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: 'proj-3',
-      name: 'Atelier Studio HQ',
-      client: 'Internal Studio',
-      budget: 2000000,
-      createdAt: new Date().toISOString()
-    }
-  ];
-
-  const DEFAULT_TRANSACTIONS = [
-    {
-      id: 'tx-101',
-      projectId: 'proj-1',
-      type: 'client_payment',
-      amount: 2500000,
-      category: 'Client Advance',
-      mode: 'Bank Transfer',
-      note: 'Stage 1 Advance payment received',
-      date: new Date(Date.now() - 86400000 * 5).toISOString()
-    },
-    {
-      id: 'tx-102',
-      projectId: 'proj-1',
-      type: 'vendor_commission',
-      amount: 125000,
-      category: 'Vendor Commission',
-      mode: 'UPI',
-      note: '5% Cashback from Royale Italian Marble Co.',
-      date: new Date(Date.now() - 86400000 * 4).toISOString()
-    },
-    {
-      id: 'tx-103',
-      projectId: 'proj-1',
-      type: 'expense',
-      amount: 850000,
-      category: 'Materials',
-      mode: 'Bank Transfer',
-      note: 'Statuario Marble Slabs purchase',
-      date: new Date(Date.now() - 86400000 * 3).toISOString()
-    },
-    {
-      id: 'tx-104',
-      projectId: 'proj-1',
-      type: 'expense',
-      amount: 180000,
-      category: 'Site Labor',
-      mode: 'Cash',
-      note: 'Carpenter Ramu - Master Bedroom Wardrobe advance',
-      date: new Date(Date.now() - 86400000 * 2).toISOString()
-    },
-    {
-      id: 'tx-105',
-      projectId: 'proj-2',
-      type: 'client_payment',
-      amount: 1200000,
-      category: 'Client Advance',
-      mode: 'Bank Transfer',
-      note: 'Initial Booking Amount',
-      date: new Date(Date.now() - 86400000 * 1).toISOString()
-    },
-    {
-      id: 'tx-106',
-      projectId: 'proj-2',
-      type: 'expense',
-      amount: 240000,
-      category: 'Subcontractor',
-      mode: 'UPI',
-      note: 'Electrical Conduit & Wiring stage 1',
-      date: new Date().toISOString()
-    }
-  ];
 
   class AakrutheeApp {
     constructor() {
@@ -110,17 +23,41 @@
       this.init();
     }
 
-    init() {
-      this.loadData();
+    async init() {
       this.cacheDOMElements();
       this.bindEvents();
-      this.render();
       this.checkOfflineStatus();
       this.initAppLifecycleSecurity();
       this.initStrictLock();
+
+      // Load Data from Cloud API with local cache fallback
+      await this.loadCloudData();
     }
 
-    loadData() {
+    // CLOUD API INTEGRATION
+    async loadCloudData() {
+      try {
+        const response = await fetch('/api/data');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            this.projects = data.projects || [];
+            this.transactions = data.transactions || [];
+            this.saveLocalCache();
+            this.render();
+            return;
+          }
+        }
+      } catch (err) {
+        console.log('Cloud API offline, loading from local cache:', err);
+      }
+
+      // Fallback to local cache if offline
+      this.loadLocalCache();
+      this.render();
+    }
+
+    loadLocalCache() {
       const storedProj = localStorage.getItem(STORAGE_KEYS.PROJECTS);
       const storedTx = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
 
@@ -129,19 +66,65 @@
           this.projects = JSON.parse(storedProj);
           this.transactions = JSON.parse(storedTx);
         } catch (e) {
-          this.projects = DEFAULT_PROJECTS;
-          this.transactions = DEFAULT_TRANSACTIONS;
+          this.projects = [];
+          this.transactions = [];
         }
-      } else {
-        this.projects = DEFAULT_PROJECTS;
-        this.transactions = DEFAULT_TRANSACTIONS;
-        this.saveData();
       }
     }
 
-    saveData() {
+    saveLocalCache() {
       localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(this.projects));
       localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(this.transactions));
+    }
+
+    async saveTransactionToCloud(newTx) {
+      this.transactions.unshift(newTx);
+      this.saveLocalCache();
+      this.render();
+
+      try {
+        const response = await fetch('/api/transactions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newTx)
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.transactions) {
+            this.transactions = data.transactions;
+            this.saveLocalCache();
+            this.render();
+          }
+        }
+      } catch (err) {
+        console.log('Failed to post transaction to Cloud API, saved locally:', err);
+      }
+    }
+
+    async saveProjectToCloud(newProj) {
+      this.projects.push(newProj);
+      this.saveLocalCache();
+      this.render();
+
+      try {
+        const response = await fetch('/api/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newProj)
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.projects) {
+            this.projects = data.projects;
+            this.saveLocalCache();
+            this.render();
+          }
+        }
+      } catch (err) {
+        console.log('Failed to post project to Cloud API, saved locally:', err);
+      }
     }
 
     cacheDOMElements() {
@@ -303,10 +286,8 @@
     async handleUnlockButtonClick() {
       const savedCredId = localStorage.getItem(STORAGE_KEYS.PASSKEY_CRED_ID);
       if (!savedCredId) {
-        // First Time: Create Passkey with Face ID
         await this.registerPasskeyWithFaceID();
       } else {
-        // Subsequent Opens: Verify existing Passkey with Face ID / System Passcode
         await this.verifyPasskeyWithFaceID();
       }
     }
@@ -444,7 +425,8 @@
         if (navigator.onLine) {
           offlineBadge.style.opacity = '1';
           offlineBadge.querySelector('.dot').style.backgroundColor = 'var(--apple-green)';
-          offlineBadge.innerHTML = '<span class="dot"></span> Offline Ready';
+          offlineBadge.innerHTML = '<span class="dot"></span> Cloud Online';
+          this.loadCloudData();
         } else {
           offlineBadge.style.opacity = '0.8';
           offlineBadge.querySelector('.dot').style.backgroundColor = 'var(--apple-orange)';
@@ -673,7 +655,7 @@
       return item;
     }
 
-    handleInflowSubmit(e) {
+    async handleInflowSubmit(e) {
       e.preventDefault();
       const amountVal = parseFloat(document.getElementById('inflow-amount').value);
       if (!amountVal || amountVal <= 0) return;
@@ -694,15 +676,12 @@
         date: new Date().toISOString()
       };
 
-      this.transactions.unshift(newTx);
-      this.saveData();
-      this.render();
-
+      await this.saveTransactionToCloud(newTx);
       this.formInflow.reset();
       this.closeSheet(this.sheetInflowOverlay);
     }
 
-    handleOutflowSubmit(e) {
+    async handleOutflowSubmit(e) {
       e.preventDefault();
       const amountVal = parseFloat(document.getElementById('outflow-amount').value);
       if (!amountVal || amountVal <= 0) return;
@@ -723,15 +702,12 @@
         date: new Date().toISOString()
       };
 
-      this.transactions.unshift(newTx);
-      this.saveData();
-      this.render();
-
+      await this.saveTransactionToCloud(newTx);
       this.formOutflow.reset();
       this.closeSheet(this.sheetOutflowOverlay);
     }
 
-    handleProjectSubmit(e) {
+    async handleProjectSubmit(e) {
       e.preventDefault();
       const name = document.getElementById('proj-name').value.trim();
       const client = document.getElementById('proj-client').value.trim();
@@ -747,10 +723,7 @@
         createdAt: new Date().toISOString()
       };
 
-      this.projects.push(newProj);
-      this.saveData();
-      this.render();
-
+      await this.saveProjectToCloud(newProj);
       this.formProject.reset();
       this.closeSheet(this.sheetProjectOverlay);
     }
