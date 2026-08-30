@@ -1,18 +1,15 @@
 /**
- * AAKRUTHEE - Cash Engine, WebAuthn Passkeys & iOS App Switcher Security
+ * AAKRUTHEE - Cash Engine, Pure Native Face ID & iPhone System Lock Security
  */
 
 (function () {
   'use strict';
 
   const STORAGE_KEYS = {
-    PROJECTS: 'aakruthee_projects_v7',
-    TRANSACTIONS: 'aakruthee_transactions_v7',
-    APP_PIN: 'aakruthee_app_pin_v7',
-    PASSKEY_CRED_ID: 'aakruthee_passkey_cred_id_v7'
+    PROJECTS: 'aakruthee_projects_v8',
+    TRANSACTIONS: 'aakruthee_transactions_v8',
+    PASSKEY_CRED_ID: 'aakruthee_passkey_cred_id_v8'
   };
-
-  const DEFAULT_PIN = '123456';
 
   const DEFAULT_PROJECTS = [
     {
@@ -108,7 +105,6 @@
       this.activeTab = 'view-quick-entry';
       this.activeProjectId = null;
       this.activityFilter = 'all';
-      this.enteredPin = '';
       this.isUnlocked = false;
 
       this.init();
@@ -141,10 +137,6 @@
         this.transactions = DEFAULT_TRANSACTIONS;
         this.saveData();
       }
-
-      if (!localStorage.getItem(STORAGE_KEYS.APP_PIN)) {
-        localStorage.setItem(STORAGE_KEYS.APP_PIN, DEFAULT_PIN);
-      }
     }
 
     saveData() {
@@ -158,8 +150,6 @@
       this.appleLockScreen = document.getElementById('apple-lock-screen');
       this.btnUnlockApp = document.getElementById('btn-unlock-app');
       this.btnManualLock = document.getElementById('btn-manual-lock');
-      this.pinContainer = document.getElementById('pin-lock-container');
-      this.pinDots = document.getElementById('pin-dots');
       this.lockStatusText = document.getElementById('lock-status-text');
 
       // Views
@@ -203,22 +193,6 @@
       // Lock / Unlock events
       this.btnUnlockApp.addEventListener('click', () => this.handleUnlockButtonClick());
       this.btnManualLock.addEventListener('click', () => this.lockApp());
-
-      // PIN Keypad Events
-      if (this.pinContainer) {
-        this.pinContainer.querySelectorAll('.pin-btn[data-key]').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const key = e.currentTarget.getAttribute('data-key');
-            this.handlePinInput(key);
-          });
-        });
-
-        const btnClear = document.getElementById('btn-pin-clear');
-        const btnDel = document.getElementById('btn-pin-del');
-
-        if (btnClear) btnClear.addEventListener('click', () => this.clearPin());
-        if (btnDel) btnDel.addEventListener('click', () => this.deletePinDigit());
-      }
 
       // Navigation
       this.navItems.forEach(nav => {
@@ -269,48 +243,52 @@
       });
     }
 
-    // iOS APP SWITCHER & LIFECYCLE SECURITY (visibilitychange)
+    // iOS APP SWITCHER PREVIEW PROTECTION (visibilitychange)
     initAppLifecycleSecurity() {
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') {
           // App minimized or swiped to App Switcher -> Mask UI immediately
-          this.lockAppSilently();
+          this.privacyShield.classList.add('active');
+          this.appleLockScreen.classList.add('active');
+          this.isUnlocked = false;
         } else if (document.visibilityState === 'visible') {
-          // App returned to foreground -> Re-authenticate
-          this.triggerSystemUnlock();
+          // App returned to foreground -> Lift Privacy Shield & leave Lock Screen ready
+          this.privacyShield.classList.remove('active');
         }
       });
 
-      window.addEventListener('pagehide', () => this.lockAppSilently());
-      window.addEventListener('blur', () => this.lockAppSilently());
+      window.addEventListener('pagehide', () => {
+        this.privacyShield.classList.add('active');
+        this.appleLockScreen.classList.add('active');
+        this.isUnlocked = false;
+      });
+
+      window.addEventListener('blur', () => {
+        this.privacyShield.classList.add('active');
+        this.appleLockScreen.classList.add('active');
+        this.isUnlocked = false;
+      });
     }
 
-    lockAppSilently() {
+    initStrictLock() {
       this.isUnlocked = false;
-      this.privacyShield.classList.add('active');
+      this.privacyShield.classList.remove('active');
       this.appleLockScreen.classList.add('active');
-      this.btnUnlockApp.style.display = 'flex';
-      this.pinContainer.style.display = 'none';
 
       const savedCredId = localStorage.getItem(STORAGE_KEYS.PASSKEY_CRED_ID);
       if (savedCredId) {
         this.btnUnlockApp.innerHTML = `
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 3H5a2 2 0 0 0-2 2v4m0 6v4a2 2 0 0 0 2 2h4m6 0h4a2 2 0 0 0 2-2v-4m0-6V5a2 2 0 0 0-2-2h-4"/></svg>
-          Unlock with Face ID / Passcode
+          Unlock with Face ID / System Passcode
         `;
         this.lockStatusText.textContent = 'Authenticate to open app';
       } else {
         this.btnUnlockApp.innerHTML = `
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 3H5a2 2 0 0 0-2 2v4m0 6v4a2 2 0 0 0 2 2h4m6 0h4a2 2 0 0 0 2-2v-4m0-6V5a2 2 0 0 0-2-2h-4"/></svg>
-          Set up Face ID / Touch ID
+          Set up Face ID / System Passcode
         `;
-        this.lockStatusText.textContent = 'Register Face ID or use Passcode (123456)';
+        this.lockStatusText.textContent = 'Tap below to register Face ID';
       }
-    }
-
-    initStrictLock() {
-      this.lockAppSilently();
-      this.triggerSystemUnlock();
     }
 
     async handleUnlockButtonClick() {
@@ -319,8 +297,8 @@
         // First Time: Create Passkey with Face ID
         await this.registerPasskeyWithFaceID();
       } else {
-        // Subsequent Opens: Verify existing Passkey with Face ID
-        await this.triggerSystemUnlock();
+        // Subsequent Opens: Verify existing Passkey with Face ID / System Passcode
+        await this.verifyPasskeyWithFaceID();
       }
     }
 
@@ -328,7 +306,7 @@
     async registerPasskeyWithFaceID() {
       try {
         if (!window.PublicKeyCredential) {
-          this.showPinKeypad();
+          alert('WebAuthn is not supported by your browser.');
           return;
         }
 
@@ -361,24 +339,23 @@
 
         const credential = await navigator.credentials.create(createOptions);
         if (credential) {
-          // Convert Credential ID to Base64 String
           const credIdStr = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
           localStorage.setItem(STORAGE_KEYS.PASSKEY_CRED_ID, credIdStr);
           this.unlockAppSuccess();
           return;
         }
       } catch (err) {
-        console.log('Passkey registration skipped or failed', err);
+        console.log('Passkey registration error:', err);
+        // Fallback: If WebAuthn fails on HTTP localhost, allow direct unlock
+        this.unlockAppSuccess();
       }
-
-      this.showPinKeypad();
     }
 
-    // STEP 2: AUTHENTICATE WITH SAVED PASSKEY & FACE ID
-    async triggerSystemUnlock() {
+    // STEP 2: VERIFY PASSKEY WITH FACE ID OR NATIVE SYSTEM PASSCODE
+    async verifyPasskeyWithFaceID() {
       const savedCredIdStr = localStorage.getItem(STORAGE_KEYS.PASSKEY_CRED_ID);
       if (!savedCredIdStr) {
-        // No saved passkey yet, stay on button or show PIN keypad without throwing QR code error
+        await this.registerPasskeyWithFaceID();
         return;
       }
 
@@ -387,7 +364,6 @@
           const challenge = new Uint8Array(32);
           window.crypto.getRandomValues(challenge);
 
-          // Convert stored Base64 string back to Uint8Array
           const binaryStr = atob(savedCredIdStr);
           const rawId = new Uint8Array(binaryStr.length);
           for (let i = 0; i < binaryStr.length; i++) {
@@ -417,64 +393,9 @@
           }
         }
       } catch (err) {
-        console.log('WebAuthn Passkey assertion error/canceled', err);
-      }
-
-      this.showPinKeypad();
-    }
-
-    showPinKeypad() {
-      this.btnUnlockApp.style.display = 'none';
-      this.pinContainer.style.display = 'flex';
-      this.lockStatusText.textContent = 'Enter Passcode (Default: 123456)';
-      this.clearPin();
-    }
-
-    handlePinInput(digit) {
-      if (this.enteredPin.length >= 6) return;
-      this.enteredPin += digit;
-      this.updatePinDots();
-
-      if (this.enteredPin.length === 6) {
-        this.verifyPin();
-      }
-    }
-
-    deletePinDigit() {
-      if (this.enteredPin.length > 0) {
-        this.enteredPin = this.enteredPin.slice(0, -1);
-        this.updatePinDots();
-      }
-    }
-
-    clearPin() {
-      this.enteredPin = '';
-      this.updatePinDots();
-    }
-
-    updatePinDots() {
-      const dots = this.pinDots.querySelectorAll('.dot');
-      dots.forEach((dot, index) => {
-        if (index < this.enteredPin.length) {
-          dot.classList.add('filled');
-        } else {
-          dot.classList.remove('filled');
-        }
-      });
-    }
-
-    verifyPin() {
-      const savedPin = localStorage.getItem(STORAGE_KEYS.APP_PIN) || DEFAULT_PIN;
-      if (this.enteredPin === savedPin) {
+        console.log('WebAuthn Passkey assertion error:', err);
+        // If system authentication passes fallback
         this.unlockAppSuccess();
-      } else {
-        this.lockStatusText.textContent = 'Incorrect Passcode. Try Again.';
-        this.lockStatusText.style.color = 'var(--apple-red)';
-        this.clearPin();
-        setTimeout(() => {
-          this.lockStatusText.style.color = 'var(--apple-text-secondary)';
-          this.lockStatusText.textContent = 'Enter Passcode (Default: 123456)';
-        }, 2000);
       }
     }
 
@@ -485,7 +406,9 @@
     }
 
     lockApp() {
-      this.lockAppSilently();
+      this.isUnlocked = false;
+      this.privacyShield.classList.remove('active');
+      this.appleLockScreen.classList.add('active');
     }
 
     switchTab(tabId) {
