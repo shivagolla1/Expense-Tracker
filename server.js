@@ -5,6 +5,7 @@ const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 8085;
+const IS_PROD = process.env.NODE_ENV === 'production';
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
@@ -16,94 +17,6 @@ const DB_FILE = path.join(DATA_DIR, 'db.json');
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
-
-// Default Seed Data
-const DEFAULT_SEED_PROJECTS = [
-  {
-    id: 'proj-1',
-    name: 'Horizon Penthouse 42',
-    client: 'Mr. Rajesh Sharma',
-    budget: 15000000,
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'proj-2',
-    name: 'Oakwood Luxury Villa',
-    client: 'Ananya Deshmukh',
-    budget: 8500000,
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'proj-3',
-    name: 'Atelier Studio HQ',
-    client: 'Internal Studio',
-    budget: 2000000,
-    createdAt: new Date().toISOString()
-  }
-];
-
-const DEFAULT_SEED_TRANSACTIONS = [
-  {
-    id: 'tx-101',
-    projectId: 'proj-1',
-    type: 'client_payment',
-    amount: 2500000,
-    category: 'Client Advance',
-    mode: 'Bank Transfer',
-    note: 'Stage 1 Advance payment received',
-    date: new Date(Date.now() - 86400000 * 5).toISOString()
-  },
-  {
-    id: 'tx-102',
-    projectId: 'proj-1',
-    type: 'vendor_commission',
-    amount: 125000,
-    category: 'Vendor Commission',
-    mode: 'UPI',
-    note: '5% Cashback from Royale Italian Marble Co.',
-    date: new Date(Date.now() - 86400000 * 4).toISOString()
-  },
-  {
-    id: 'tx-103',
-    projectId: 'proj-1',
-    type: 'expense',
-    amount: 850000,
-    category: 'Materials',
-    mode: 'Bank Transfer',
-    note: 'Statuario Marble Slabs purchase',
-    date: new Date(Date.now() - 86400000 * 3).toISOString()
-  },
-  {
-    id: 'tx-104',
-    projectId: 'proj-1',
-    type: 'expense',
-    amount: 180000,
-    category: 'Site Labor',
-    mode: 'Cash',
-    note: 'Carpenter Ramu - Master Bedroom Wardrobe advance',
-    date: new Date(Date.now() - 86400000 * 2).toISOString()
-  },
-  {
-    id: 'tx-105',
-    projectId: 'proj-2',
-    type: 'client_payment',
-    amount: 1200000,
-    category: 'Client Advance',
-    mode: 'Bank Transfer',
-    note: 'Initial Booking Amount',
-    date: new Date(Date.now() - 86400000 * 1).toISOString()
-  },
-  {
-    id: 'tx-106',
-    projectId: 'proj-2',
-    type: 'expense',
-    amount: 240000,
-    category: 'Subcontractor',
-    mode: 'UPI',
-    note: 'Electrical Conduit & Wiring stage 1',
-    date: new Date().toISOString()
-  }
-];
 
 // POSTGRESQL DATABASE CONFIGURATION
 let pool = null;
@@ -156,22 +69,12 @@ async function initPostgresSchema() {
       );
     `);
 
-    // Check if table is empty to seed initial data
-    const resProj = await client.query('SELECT COUNT(*) FROM projects');
-    if (parseInt(resProj.rows[0].count, 10) === 0) {
-      for (const p of DEFAULT_SEED_PROJECTS) {
-        await client.query(
-          'INSERT INTO projects (id, name, client, budget, created_at) VALUES ($1, $2, $3, $4, $5)',
-          [p.id, p.name, p.client, p.budget, p.createdAt]
-        );
+    // Auto-seed dummy data ONLY if SEED_DUMMY_DATA environment variable is explicitly set to "true"
+    if (process.env.SEED_DUMMY_DATA === 'true') {
+      const resProj = await client.query('SELECT COUNT(*) FROM projects');
+      if (parseInt(resProj.rows[0].count, 10) === 0) {
+        console.log('Seeding dummy data because SEED_DUMMY_DATA=true...');
       }
-      for (const t of DEFAULT_SEED_TRANSACTIONS) {
-        await client.query(
-          'INSERT INTO transactions (id, project_id, type, amount, category, mode, note, date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-          [t.id, t.projectId, t.type, t.amount, t.category, t.mode, t.note, t.date]
-        );
-      }
-      console.log('PostgreSQL database seeded with initial default projects and transactions.');
     }
 
     client.release();
@@ -183,14 +86,14 @@ async function initPostgresSchema() {
 // FILE FALLBACK HELPERS
 function readJsonDB() {
   if (!fs.existsSync(DB_FILE)) {
-    const defaultData = { projects: DEFAULT_SEED_PROJECTS, transactions: DEFAULT_SEED_TRANSACTIONS };
-    writeJsonDB(defaultData);
-    return defaultData;
+    const emptyData = { projects: [], transactions: [] };
+    writeJsonDB(emptyData);
+    return emptyData;
   }
   try {
     return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
   } catch (e) {
-    return { projects: DEFAULT_SEED_PROJECTS, transactions: DEFAULT_SEED_TRANSACTIONS };
+    return { projects: [], transactions: [] };
   }
 }
 
@@ -204,7 +107,7 @@ function writeJsonDB(data) {
 
 // REST API ENDPOINTS
 
-// 1. GET ALL CLOUD DATA (PostgreSQL / JSON Fallback)
+// 1. GET ALL CLOUD DATA
 app.get('/api/data', async (req, res) => {
   if (usePostgres && pool) {
     try {
@@ -282,10 +185,25 @@ app.post('/api/projects', async (req, res) => {
   res.json({ success: true, dbType: 'JSON_File', project: newProj, projects: jsonDB.projects });
 });
 
+// 4. CLEAR DEMO DATA / RESET DATABASE (ADMIN API)
+app.post('/api/clear-data', async (req, res) => {
+  if (usePostgres && pool) {
+    try {
+      await pool.query('TRUNCATE transactions, projects RESTART IDENTITY CASCADE');
+      return res.json({ success: true, message: 'PostgreSQL database cleared.' });
+    } catch (err) {
+      console.error('Error clearing PostgreSQL database:', err);
+    }
+  }
+
+  writeJsonDB({ projects: [], transactions: [] });
+  res.json({ success: true, message: 'JSON database cleared.' });
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(PORT, () => {
-  console.log(`Aakruthee Cash Engine server running on port ${PORT} [Mode: ${usePostgres ? 'PostgreSQL' : 'JSON DB'}]`);
+  console.log(`Aakruthee Production Server running on port ${PORT} [Mode: ${usePostgres ? 'PostgreSQL' : 'JSON DB'}]`);
 });
