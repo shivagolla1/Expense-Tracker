@@ -29,6 +29,7 @@
     async init() {
       this.cacheDOMElements();
       this.bindEvents();
+      this.bindLiveAmountInputs();
       this.checkOfflineStatus();
       this.initAppLifecycleSecurity();
       this.initStrictLock();
@@ -41,6 +42,68 @@
       ['aakruthee_projects_v10', 'aakruthee_transactions_v10', 'aakruthee_projects_v9', 'aakruthee_transactions_v9', 'aakruthee_projects_v8', 'aakruthee_transactions_v8', 'atelier_flow_projects_v4', 'atelier_flow_transactions_v4', 'aakruthee_projects_prod_v1', 'aakruthee_transactions_prod_v1', 'aakruthee_projects_prod_v2', 'aakruthee_transactions_prod_v2'].forEach(key => {
         localStorage.removeItem(key);
       });
+    }
+
+    // INDIAN NUMBER FORMATTING HELPERS
+    parseAmount(valStr) {
+      if (!valStr) return 0;
+      const clean = String(valStr).replace(/,/g, '').trim();
+      return parseFloat(clean) || 0;
+    }
+
+    formatIndianNumberString(valStr) {
+      if (!valStr) return '';
+      // Retain cursor position / clean digits
+      const digits = String(valStr).replace(/[^0-9.]/g, '');
+      if (!digits) return '';
+      const parts = digits.split('.');
+      let integerPart = parts[0];
+      const decimalPart = parts.length > 1 ? '.' + parts[1].slice(0, 2) : '';
+
+      if (integerPart.length > 3) {
+        const lastThree = integerPart.substring(integerPart.length - 3);
+        const otherNumbers = integerPart.substring(0, integerPart.length - 3);
+        integerPart = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + "," + lastThree;
+      }
+      return integerPart + decimalPart;
+    }
+
+    getIndianShortText(num) {
+      if (!num || num <= 0) return '';
+      if (num >= 10000000) {
+        const val = (num / 10000000).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+        return `${val} Crores`;
+      }
+      if (num >= 100000) {
+        const val = (num / 100000).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+        return `${val} Lakhs`;
+      }
+      if (num >= 1000) {
+        const val = (num / 1000).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+        return `${val} Thousand`;
+      }
+      return `${num.toLocaleString('en-IN')}`;
+    }
+
+    bindLiveAmountInputs() {
+      const setupLiveFormatting = (inputId, subtextId) => {
+        const input = document.getElementById(inputId);
+        const subtext = document.getElementById(subtextId);
+        if (!input || !subtext) return;
+
+        input.addEventListener('input', () => {
+          const rawVal = input.value;
+          const formatted = this.formatIndianNumberString(rawVal);
+          input.value = formatted;
+
+          const numVal = this.parseAmount(formatted);
+          subtext.textContent = this.getIndianShortText(numVal);
+        });
+      };
+
+      setupLiveFormatting('inflow-amount', 'inflow-amount-subtext');
+      setupLiveFormatting('outflow-amount', 'outflow-amount-subtext');
+      setupLiveFormatting('proj-budget', 'proj-budget-subtext');
     }
 
     // CLOUD API INTEGRATION
@@ -282,11 +345,9 @@
     }
 
     bindEvents() {
-      // Lock / Unlock events
       this.btnUnlockApp.addEventListener('click', () => this.handleUnlockButtonClick());
       this.btnManualLock.addEventListener('click', () => this.lockApp());
 
-      // Navigation
       this.navItems.forEach(nav => {
         nav.addEventListener('click', () => {
           const targetTab = nav.getAttribute('data-tab');
@@ -298,6 +359,7 @@
         this.editingTxId = null;
         this.inflowSheetTitle.textContent = 'Record Money In';
         this.btnSubmitInflow.textContent = 'Save Money In';
+        document.getElementById('inflow-amount-subtext').textContent = '';
         this.openSheet(this.sheetInflowOverlay);
       });
 
@@ -305,10 +367,14 @@
         this.editingTxId = null;
         this.outflowSheetTitle.textContent = 'Record Money Out';
         this.btnSubmitOutflow.textContent = 'Save Money Out';
+        document.getElementById('outflow-amount-subtext').textContent = '';
         this.openSheet(this.sheetOutflowOverlay);
       });
 
-      this.btnDashboardAddProj.addEventListener('click', () => this.openSheet(this.sheetProjectOverlay));
+      this.btnDashboardAddProj.addEventListener('click', () => {
+        document.getElementById('proj-budget-subtext').textContent = '';
+        this.openSheet(this.sheetProjectOverlay);
+      });
       this.btnBackToDashboard.addEventListener('click', () => this.switchTab('view-dashboard'));
       this.btnDeleteProject.addEventListener('click', () => this.deleteProjectFromCloud(this.activeProjectId));
 
@@ -316,6 +382,7 @@
         this.editingTxId = null;
         this.inflowSheetTitle.textContent = 'Record Money In';
         this.btnSubmitInflow.textContent = 'Save Money In';
+        document.getElementById('inflow-amount-subtext').textContent = '';
         this.openSheetWithProject(this.sheetInflowOverlay, this.activeProjectId);
       });
 
@@ -323,6 +390,7 @@
         this.editingTxId = null;
         this.outflowSheetTitle.textContent = 'Record Money Out';
         this.btnSubmitOutflow.textContent = 'Save Money Out';
+        document.getElementById('outflow-amount-subtext').textContent = '';
         this.openSheetWithProject(this.sheetOutflowOverlay, this.activeProjectId);
       });
 
@@ -415,9 +483,11 @@
 
     startEditingTransaction(tx) {
       this.editingTxId = tx.id;
+      const formattedAmt = this.formatIndianNumberString(String(tx.amount));
+
       if (tx.type === 'expense') {
-        // Pre-fill Money Out Sheet
-        document.getElementById('outflow-amount').value = tx.amount;
+        document.getElementById('outflow-amount').value = formattedAmt;
+        document.getElementById('outflow-amount-subtext').textContent = this.getIndianShortText(tx.amount);
         document.getElementById('outflow-note').value = tx.note || '';
         
         const catRadio = document.querySelector(`input[name="outflow_cat"][value="${tx.category}"]`);
@@ -430,8 +500,8 @@
         this.btnSubmitOutflow.textContent = 'Update Transaction';
         this.openSheetWithProject(this.sheetOutflowOverlay, tx.projectId);
       } else {
-        // Pre-fill Money In Sheet
-        document.getElementById('inflow-amount').value = tx.amount;
+        document.getElementById('inflow-amount').value = formattedAmt;
+        document.getElementById('inflow-amount-subtext').textContent = this.getIndianShortText(tx.amount);
         document.getElementById('inflow-note').value = tx.note || '';
 
         const typeRadio = document.querySelector(`input[name="inflow_type"][value="${tx.type}"]`);
@@ -474,7 +544,6 @@
       });
     }
 
-    // INSTANT AUTOMATIC UNLOCK ON LAUNCH
     initStrictLock() {
       this.isUnlocked = false;
       this.privacyShield.classList.remove('active');
@@ -653,7 +722,7 @@
 
     openSheet(overlay) {
       overlay.classList.add('active');
-      const firstInput = overlay.querySelector('input[type="number"], input[type="text"]');
+      const firstInput = overlay.querySelector('input[type="text"]');
       if (firstInput) setTimeout(() => firstInput.focus(), 300);
     }
 
@@ -757,7 +826,6 @@
       this.fullProjTitle.textContent = proj.name;
       this.fullProjClient.textContent = proj.client;
 
-      // Render Est. Budget Subtitle Badge Right Under Client Name
       if (proj.budget && Number(proj.budget) > 0) {
         this.fullProjBudgetBadge.textContent = `• Est. Budget: ${this.formatCurrency(proj.budget)}`;
         this.fullProjBudgetBadge.style.display = 'inline-block';
@@ -879,7 +947,6 @@
         </div>
       `;
 
-      // Tap transaction row to open iOS Action Sheet Menu
       item.addEventListener('click', () => {
         this.openTxActionSheet(tx);
       });
@@ -889,7 +956,8 @@
 
     async handleInflowSubmit(e) {
       e.preventDefault();
-      const amountVal = parseFloat(document.getElementById('inflow-amount').value);
+      const rawAmt = document.getElementById('inflow-amount').value;
+      const amountVal = this.parseAmount(rawAmt);
       if (!amountVal || amountVal <= 0) return;
 
       const selectedProj = this.formInflow.querySelector('input[name="inflow_project"]:checked');
@@ -916,12 +984,14 @@
 
       await this.saveTransactionToCloud(newTx);
       this.formInflow.reset();
+      document.getElementById('inflow-amount-subtext').textContent = '';
       this.closeSheet(this.sheetInflowOverlay);
     }
 
     async handleOutflowSubmit(e) {
       e.preventDefault();
-      const amountVal = parseFloat(document.getElementById('outflow-amount').value);
+      const rawAmt = document.getElementById('outflow-amount').value;
+      const amountVal = this.parseAmount(rawAmt);
       if (!amountVal || amountVal <= 0) return;
 
       const selectedProj = this.formOutflow.querySelector('input[name="outflow_project"]:checked');
@@ -948,6 +1018,7 @@
 
       await this.saveTransactionToCloud(newTx);
       this.formOutflow.reset();
+      document.getElementById('outflow-amount-subtext').textContent = '';
       this.closeSheet(this.sheetOutflowOverlay);
     }
 
@@ -955,7 +1026,8 @@
       e.preventDefault();
       const name = document.getElementById('proj-name').value.trim();
       const client = document.getElementById('proj-client').value.trim();
-      const budgetVal = parseFloat(document.getElementById('proj-budget').value);
+      const rawBudget = document.getElementById('proj-budget').value;
+      const budgetVal = this.parseAmount(rawBudget);
 
       if (!name || !client) return;
 
@@ -969,6 +1041,7 @@
 
       await this.saveProjectToCloud(newProj);
       this.formProject.reset();
+      document.getElementById('proj-budget-subtext').textContent = '';
       this.closeSheet(this.sheetProjectOverlay);
     }
 

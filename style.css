@@ -796,6 +796,17 @@ body {
   transform: scale(0.98);
 }
 
+/* LIVE AMOUNT SUBTEXT */
+.live-amount-subtext {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--apple-text-secondary);
+  margin-top: 4px;
+  padding-left: 2px;
+  min-height: 16px;
+  transition: opacity 0.15s ease;
+}
+
 /* BOTTOM NAVIGATOR BAR */
 .apple-bottom-nav {
   position: fixed;
