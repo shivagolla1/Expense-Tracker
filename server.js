@@ -73,11 +73,10 @@ async function initPostgresSchema() {
       DELETE FROM transactions WHERE id IN ('tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106') OR project_id IN ('proj-1', 'proj-2', 'proj-3');
       DELETE FROM projects WHERE id IN ('proj-1', 'proj-2', 'proj-3');
     `);
-    console.log('Targeted purge completed: Dummy sample records deleted from PostgreSQL. User real data preserved.');
 
     client.release();
   } catch (err) {
-    console.error('Error in PostgreSQL schema initialization/purge:', err);
+    console.error('Error in PostgreSQL schema initialization:', err);
   }
 }
 
@@ -90,7 +89,6 @@ function readJsonDB() {
   }
   try {
     const json = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-    // Filter out dummy projects & transactions
     const cleanProjects = (json.projects || []).filter(p => !['proj-1', 'proj-2', 'proj-3'].includes(p.id));
     const cleanTransactions = (json.transactions || []).filter(t => !['tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106'].includes(t.id) && !['proj-1', 'proj-2', 'proj-3'].includes(t.projectId));
     return { projects: cleanProjects, transactions: cleanTransactions };
@@ -158,7 +156,64 @@ app.post('/api/transactions', async (req, res) => {
   res.json({ success: true, dbType: 'JSON_File', transaction: newTx, transactions: jsonDB.transactions });
 });
 
-// 3. POST NEW PROJECT
+// 3. PUT UPDATE TRANSACTION
+app.put('/api/transactions/:id', async (req, res) => {
+  const txId = req.params.id;
+  const updatedTx = req.body;
+
+  if (!txId || !updatedTx || !updatedTx.amount) {
+    return res.status(400).json({ success: false, error: 'Invalid update payload' });
+  }
+
+  if (usePostgres && pool) {
+    try {
+      await pool.query(
+        'UPDATE transactions SET type = $1, amount = $2, category = $3, mode = $4, note = $5 WHERE id = $6',
+        [updatedTx.type, updatedTx.amount, updatedTx.category, updatedTx.mode, updatedTx.note, txId]
+      );
+
+      const txRes = await pool.query('SELECT id, project_id as "projectId", type, amount, category, mode, note, date FROM transactions ORDER BY date DESC');
+      const transactions = txRes.rows.map(r => ({ ...r, amount: Number(r.amount) }));
+
+      return res.json({ success: true, dbType: 'PostgreSQL', transactions });
+    } catch (err) {
+      console.error('Error updating transaction in PostgreSQL:', err);
+    }
+  }
+
+  const jsonDB = readJsonDB();
+  const index = jsonDB.transactions.findIndex(t => t.id === txId);
+  if (index !== -1) {
+    jsonDB.transactions[index] = { ...jsonDB.transactions[index], ...updatedTx };
+    writeJsonDB(jsonDB);
+  }
+  res.json({ success: true, dbType: 'JSON_File', transactions: jsonDB.transactions });
+});
+
+// 4. DELETE TRANSACTION
+app.delete('/api/transactions/:id', async (req, res) => {
+  const txId = req.params.id;
+  if (!txId) return res.status(400).json({ success: false, error: 'Transaction ID required' });
+
+  if (usePostgres && pool) {
+    try {
+      await pool.query('DELETE FROM transactions WHERE id = $1', [txId]);
+      const txRes = await pool.query('SELECT id, project_id as "projectId", type, amount, category, mode, note, date FROM transactions ORDER BY date DESC');
+      const transactions = txRes.rows.map(r => ({ ...r, amount: Number(r.amount) }));
+
+      return res.json({ success: true, dbType: 'PostgreSQL', transactions });
+    } catch (err) {
+      console.error('Error deleting transaction from PostgreSQL:', err);
+    }
+  }
+
+  const jsonDB = readJsonDB();
+  jsonDB.transactions = jsonDB.transactions.filter(t => t.id !== txId);
+  writeJsonDB(jsonDB);
+  res.json({ success: true, dbType: 'JSON_File', transactions: jsonDB.transactions });
+});
+
+// 5. POST NEW PROJECT
 app.post('/api/projects', async (req, res) => {
   const newProj = req.body;
   if (!newProj || !newProj.name || !newProj.client) {
@@ -187,7 +242,7 @@ app.post('/api/projects', async (req, res) => {
   res.json({ success: true, dbType: 'JSON_File', project: newProj, projects: jsonDB.projects });
 });
 
-// 4. DELETE SPECIFIC PROJECT
+// 6. DELETE PROJECT
 app.delete('/api/projects/:id', async (req, res) => {
   const projId = req.params.id;
   if (!projId) return res.status(400).json({ success: false, error: 'Project ID required' });

@@ -6,9 +6,9 @@
   'use strict';
 
   const STORAGE_KEYS = {
-    PROJECTS: 'aakruthee_projects_prod_v2',
-    TRANSACTIONS: 'aakruthee_transactions_prod_v2',
-    PASSKEY_CRED_ID: 'aakruthee_passkey_cred_id_prod_v2'
+    PROJECTS: 'aakruthee_projects_prod_v3',
+    TRANSACTIONS: 'aakruthee_transactions_prod_v3',
+    PASSKEY_CRED_ID: 'aakruthee_passkey_cred_id_prod_v3'
   };
 
   class AakrutheeApp {
@@ -20,6 +20,9 @@
       this.activityFilter = 'all';
       this.isUnlocked = false;
 
+      this.selectedTxForAction = null;
+      this.editingTxId = null;
+
       this.init();
     }
 
@@ -30,15 +33,12 @@
       this.initAppLifecycleSecurity();
       this.initStrictLock();
 
-      // Clear legacy dummy cache
       this.clearLegacyDummyCache();
-
-      // Load Clean Data from Cloud API with local cache fallback
       await this.loadCloudData();
     }
 
     clearLegacyDummyCache() {
-      ['aakruthee_projects_v10', 'aakruthee_transactions_v10', 'aakruthee_projects_v9', 'aakruthee_transactions_v9', 'aakruthee_projects_v8', 'aakruthee_transactions_v8', 'atelier_flow_projects_v4', 'atelier_flow_transactions_v4', 'aakruthee_projects_prod_v1', 'aakruthee_transactions_prod_v1'].forEach(key => {
+      ['aakruthee_projects_v10', 'aakruthee_transactions_v10', 'aakruthee_projects_v9', 'aakruthee_transactions_v9', 'aakruthee_projects_v8', 'aakruthee_transactions_v8', 'atelier_flow_projects_v4', 'atelier_flow_transactions_v4', 'aakruthee_projects_prod_v1', 'aakruthee_transactions_prod_v1', 'aakruthee_projects_prod_v2', 'aakruthee_transactions_prod_v2'].forEach(key => {
         localStorage.removeItem(key);
       });
     }
@@ -50,7 +50,6 @@
         if (response.ok) {
           const data = await response.json();
           if (data.success) {
-            // Filter out dummy sample IDs just in case
             this.projects = (data.projects || []).filter(p => !['proj-1', 'proj-2', 'proj-3'].includes(p.id));
             this.transactions = (data.transactions || []).filter(t => !['tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106'].includes(t.id) && !['proj-1', 'proj-2', 'proj-3'].includes(t.projectId));
             this.saveLocalCache();
@@ -62,7 +61,6 @@
         console.log('Cloud API offline, loading from local cache:', err);
       }
 
-      // Fallback to local cache if offline
       this.loadLocalCache();
       this.render();
     }
@@ -91,6 +89,38 @@
     }
 
     async saveTransactionToCloud(newTx) {
+      if (this.editingTxId) {
+        // UPDATE EXISTING TRANSACTION
+        const idx = this.transactions.findIndex(t => t.id === this.editingTxId);
+        if (idx !== -1) {
+          this.transactions[idx] = { ...this.transactions[idx], ...newTx };
+        }
+        const updatedId = this.editingTxId;
+        this.editingTxId = null;
+        this.saveLocalCache();
+        this.render();
+
+        try {
+          const response = await fetch(`/api/transactions/${updatedId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newTx)
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.transactions) {
+              this.transactions = data.transactions.filter(t => !['tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106'].includes(t.id));
+              this.saveLocalCache();
+              this.render();
+            }
+          }
+        } catch (err) {
+          console.log('Failed to update transaction on cloud, saved locally:', err);
+        }
+        return;
+      }
+
+      // CREATE NEW TRANSACTION
       this.transactions.unshift(newTx);
       this.saveLocalCache();
       this.render();
@@ -105,13 +135,35 @@
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.transactions) {
-            this.transactions = data.transactions.filter(t => !['tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106'].includes(t.id) && !['proj-1', 'proj-2', 'proj-3'].includes(t.projectId));
+            this.transactions = data.transactions.filter(t => !['tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106'].includes(t.id));
             this.saveLocalCache();
             this.render();
           }
         }
       } catch (err) {
         console.log('Failed to post transaction to Cloud API, saved locally:', err);
+      }
+    }
+
+    async deleteTransactionFromCloud(txId) {
+      if (!txId) return;
+
+      this.transactions = this.transactions.filter(t => t.id !== txId);
+      this.saveLocalCache();
+      this.render();
+
+      try {
+        const response = await fetch(`/api/transactions/${txId}`, { method: 'DELETE' });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.transactions) {
+            this.transactions = data.transactions.filter(t => !['tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106'].includes(t.id));
+            this.saveLocalCache();
+            this.render();
+          }
+        }
+      } catch (err) {
+        console.log('Failed to delete transaction on cloud, updated locally:', err);
       }
     }
 
@@ -197,6 +249,8 @@
 
       this.fullProjTitle = document.getElementById('full-proj-title');
       this.fullProjClient = document.getElementById('full-proj-client');
+      this.fullProjBudgetBadge = document.getElementById('full-proj-budget-badge');
+
       this.fullProjBalance = document.getElementById('full-proj-balance');
       this.fullProjAdvances = document.getElementById('full-proj-advances');
       this.fullProjExpenses = document.getElementById('full-proj-expenses');
@@ -208,6 +262,7 @@
       this.sheetInflowOverlay = document.getElementById('sheet-inflow-overlay');
       this.sheetOutflowOverlay = document.getElementById('sheet-outflow-overlay');
       this.sheetProjectOverlay = document.getElementById('sheet-project-overlay');
+      this.sheetTxActionOverlay = document.getElementById('sheet-tx-action-overlay');
 
       this.formInflow = document.getElementById('form-inflow');
       this.formOutflow = document.getElementById('form-outflow');
@@ -215,6 +270,15 @@
 
       this.inflowProjectChips = document.getElementById('inflow-project-chips');
       this.outflowProjectChips = document.getElementById('outflow-project-chips');
+
+      this.inflowSheetTitle = document.getElementById('inflow-sheet-title');
+      this.outflowSheetTitle = document.getElementById('outflow-sheet-title');
+      this.btnSubmitInflow = document.getElementById('btn-submit-inflow');
+      this.btnSubmitOutflow = document.getElementById('btn-submit-outflow');
+
+      this.txActionSummary = document.getElementById('tx-action-summary');
+      this.btnEditTxAction = document.getElementById('btn-edit-tx-action');
+      this.btnDeleteTxAction = document.getElementById('btn-delete-tx-action');
     }
 
     bindEvents() {
@@ -230,18 +294,55 @@
         });
       });
 
-      this.heroBtnInflow.addEventListener('click', () => this.openSheet(this.sheetInflowOverlay));
-      this.heroBtnOutflow.addEventListener('click', () => this.openSheet(this.sheetOutflowOverlay));
+      this.heroBtnInflow.addEventListener('click', () => {
+        this.editingTxId = null;
+        this.inflowSheetTitle.textContent = 'Record Money In';
+        this.btnSubmitInflow.textContent = 'Save Money In';
+        this.openSheet(this.sheetInflowOverlay);
+      });
+
+      this.heroBtnOutflow.addEventListener('click', () => {
+        this.editingTxId = null;
+        this.outflowSheetTitle.textContent = 'Record Money Out';
+        this.btnSubmitOutflow.textContent = 'Save Money Out';
+        this.openSheet(this.sheetOutflowOverlay);
+      });
 
       this.btnDashboardAddProj.addEventListener('click', () => this.openSheet(this.sheetProjectOverlay));
       this.btnBackToDashboard.addEventListener('click', () => this.switchTab('view-dashboard'));
       this.btnDeleteProject.addEventListener('click', () => this.deleteProjectFromCloud(this.activeProjectId));
 
       this.fullProjBtnInflow.addEventListener('click', () => {
+        this.editingTxId = null;
+        this.inflowSheetTitle.textContent = 'Record Money In';
+        this.btnSubmitInflow.textContent = 'Save Money In';
         this.openSheetWithProject(this.sheetInflowOverlay, this.activeProjectId);
       });
+
       this.fullProjBtnOutflow.addEventListener('click', () => {
+        this.editingTxId = null;
+        this.outflowSheetTitle.textContent = 'Record Money Out';
+        this.btnSubmitOutflow.textContent = 'Save Money Out';
         this.openSheetWithProject(this.sheetOutflowOverlay, this.activeProjectId);
+      });
+
+      // Action Sheet Events
+      this.btnEditTxAction.addEventListener('click', () => {
+        if (this.selectedTxForAction) {
+          const tx = this.selectedTxForAction;
+          this.closeSheet(this.sheetTxActionOverlay);
+          this.startEditingTransaction(tx);
+        }
+      });
+
+      this.btnDeleteTxAction.addEventListener('click', () => {
+        if (this.selectedTxForAction) {
+          const tx = this.selectedTxForAction;
+          if (confirm(`Delete transaction "${tx.note || tx.category || 'Entry'}" of ${this.formatCurrency(tx.amount)}?`)) {
+            this.closeSheet(this.sheetTxActionOverlay);
+            this.deleteTransactionFromCloud(tx.id);
+          }
+        }
       });
 
       document.querySelectorAll('.close-sheet').forEach(btn => {
@@ -272,16 +373,87 @@
       });
     }
 
+    // OPEN iOS TRANSACTION ACTION SHEET
+    openTxActionSheet(tx) {
+      this.selectedTxForAction = tx;
+      const proj = this.projects.find(p => p.id === tx.projectId) || { name: 'General Project' };
+      const dateStr = new Date(tx.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+      let typeLabel = 'Expense';
+      if (tx.type === 'client_payment') typeLabel = 'Client Advance (Money In)';
+      if (tx.type === 'vendor_commission') typeLabel = 'Vendor Commission (Money In)';
+
+      this.txActionSummary.innerHTML = `
+        <div class="tx-action-row-item">
+          <span class="lbl">Amount</span>
+          <span class="val" style="font-size:16px; font-weight:700;">${this.formatCurrency(tx.amount)}</span>
+        </div>
+        <div class="tx-action-row-item">
+          <span class="lbl">Type / Category</span>
+          <span class="val">${this.escapeHTML(tx.category || typeLabel)}</span>
+        </div>
+        <div class="tx-action-row-item">
+          <span class="lbl">Project</span>
+          <span class="val">${this.escapeHTML(proj.name)}</span>
+        </div>
+        <div class="tx-action-row-item">
+          <span class="lbl">Payment Mode</span>
+          <span class="val">${tx.mode || 'UPI'}</span>
+        </div>
+        <div class="tx-action-row-item">
+          <span class="lbl">Note / Vendor</span>
+          <span class="val">${this.escapeHTML(tx.note || '—')}</span>
+        </div>
+        <div class="tx-action-row-item">
+          <span class="lbl">Date</span>
+          <span class="val">${dateStr}</span>
+        </div>
+      `;
+
+      this.openSheet(this.sheetTxActionOverlay);
+    }
+
+    startEditingTransaction(tx) {
+      this.editingTxId = tx.id;
+      if (tx.type === 'expense') {
+        // Pre-fill Money Out Sheet
+        document.getElementById('outflow-amount').value = tx.amount;
+        document.getElementById('outflow-note').value = tx.note || '';
+        
+        const catRadio = document.querySelector(`input[name="outflow_cat"][value="${tx.category}"]`);
+        if (catRadio) catRadio.checked = true;
+
+        const modeRadio = document.querySelector(`input[name="outflow_mode"][value="${tx.mode}"]`);
+        if (modeRadio) modeRadio.checked = true;
+
+        this.outflowSheetTitle.textContent = 'Edit Money Out';
+        this.btnSubmitOutflow.textContent = 'Update Transaction';
+        this.openSheetWithProject(this.sheetOutflowOverlay, tx.projectId);
+      } else {
+        // Pre-fill Money In Sheet
+        document.getElementById('inflow-amount').value = tx.amount;
+        document.getElementById('inflow-note').value = tx.note || '';
+
+        const typeRadio = document.querySelector(`input[name="inflow_type"][value="${tx.type}"]`);
+        if (typeRadio) typeRadio.checked = true;
+
+        const modeRadio = document.querySelector(`input[name="inflow_mode"][value="${tx.mode}"]`);
+        if (modeRadio) modeRadio.checked = true;
+
+        this.inflowSheetTitle.textContent = 'Edit Money In';
+        this.btnSubmitInflow.textContent = 'Update Transaction';
+        this.openSheetWithProject(this.sheetInflowOverlay, tx.projectId);
+      }
+    }
+
     // iOS APP SWITCHER PREVIEW PROTECTION & AUTOMATIC RESUME UNLOCK
     initAppLifecycleSecurity() {
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') {
-          // App minimized or swiped to App Switcher -> Mask UI immediately
           this.privacyShield.classList.add('active');
           this.appleLockScreen.classList.add('active');
           this.isUnlocked = false;
         } else if (document.visibilityState === 'visible') {
-          // App returned to foreground -> Lift Privacy Shield & Auto-trigger Face ID
           this.privacyShield.classList.remove('active');
           if (!this.isUnlocked) {
             setTimeout(() => this.handleUnlockButtonClick(), 150);
@@ -323,7 +495,6 @@
         this.lockStatusText.textContent = 'Tap below to register Face ID';
       }
 
-      // Auto-trigger Face ID prompt on app load!
       setTimeout(() => {
         this.handleUnlockButtonClick();
       }, 150);
@@ -338,7 +509,6 @@
       }
     }
 
-    // STEP 1: REGISTER PASSKEY WITH FACE ID
     async registerPasskeyWithFaceID() {
       try {
         if (!window.PublicKeyCredential) {
@@ -386,7 +556,6 @@
       }
     }
 
-    // STEP 2: VERIFY PASSKEY WITH FACE ID OR NATIVE SYSTEM PASSCODE
     async verifyPasskeyWithFaceID() {
       const savedCredIdStr = localStorage.getItem(STORAGE_KEYS.PASSKEY_CRED_ID);
       if (!savedCredIdStr) {
@@ -587,6 +756,15 @@
 
       this.fullProjTitle.textContent = proj.name;
       this.fullProjClient.textContent = proj.client;
+
+      // Render Est. Budget Subtitle Badge Right Under Client Name
+      if (proj.budget && Number(proj.budget) > 0) {
+        this.fullProjBudgetBadge.textContent = `• Est. Budget: ${this.formatCurrency(proj.budget)}`;
+        this.fullProjBudgetBadge.style.display = 'inline-block';
+      } else {
+        this.fullProjBudgetBadge.style.display = 'none';
+      }
+
       this.fullProjBalance.textContent = this.formatCurrency(stats.balanceLeft);
       this.fullProjAdvances.textContent = this.formatCurrency(stats.advances);
       this.fullProjExpenses.textContent = this.formatCurrency(stats.expenses);
@@ -701,6 +879,11 @@
         </div>
       `;
 
+      // Tap transaction row to open iOS Action Sheet Menu
+      item.addEventListener('click', () => {
+        this.openTxActionSheet(tx);
+      });
+
       return item;
     }
 
@@ -721,7 +904,7 @@
       const note = document.getElementById('inflow-note').value.trim();
 
       const newTx = {
-        id: 'tx-' + Date.now(),
+        id: this.editingTxId || ('tx-' + Date.now()),
         projectId,
         type,
         amount: amountVal,
@@ -753,7 +936,7 @@
       const note = document.getElementById('outflow-note').value.trim();
 
       const newTx = {
-        id: 'tx-' + Date.now(),
+        id: this.editingTxId || ('tx-' + Date.now()),
         projectId,
         type: 'expense',
         amount: amountVal,

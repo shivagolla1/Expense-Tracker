@@ -151,7 +151,10 @@
         <div class="apple-card project-hero-card">
           <div class="proj-header-info">
             <h2 id="full-proj-title">Project Name</h2>
-            <span class="proj-client-subtitle" id="full-proj-client">Client Name</span>
+            <div class="proj-sub-row">
+              <span class="proj-client-subtitle" id="full-proj-client">Client Name</span>
+              <span class="proj-budget-badge" id="full-proj-budget-badge"></span>
+            </div>
           </div>
 
           <div class="apple-balance-display">
@@ -221,7 +224,7 @@
       <div class="bottom-sheet" id="sheet-inflow">
         <div class="sheet-handle"></div>
         <div class="sheet-header">
-          <h3>Record Money In</h3>
+          <h3 id="inflow-sheet-title">Record Money In</h3>
           <button class="close-sheet" data-close="sheet-inflow-overlay">&times;</button>
         </div>
         
@@ -272,7 +275,7 @@
             <input type="text" id="inflow-note" placeholder="e.g. Advance payment / 5% Cashback">
           </div>
 
-          <button type="submit" class="apple-submit-btn btn-submit-inflow">
+          <button type="submit" class="apple-submit-btn btn-submit-inflow" id="btn-submit-inflow">
             Save Money In
           </button>
         </form>
@@ -284,7 +287,7 @@
       <div class="bottom-sheet" id="sheet-outflow">
         <div class="sheet-handle"></div>
         <div class="sheet-header">
-          <h3>Record Money Out</h3>
+          <h3 id="outflow-sheet-title">Record Money Out</h3>
           <button class="close-sheet" data-close="sheet-outflow-overlay">&times;</button>
         </div>
 
@@ -347,7 +350,7 @@
             <input type="text" id="outflow-note" placeholder="e.g. Marble Supplier, Cash to Carpenter">
           </div>
 
-          <button type="submit" class="apple-submit-btn btn-submit-outflow">
+          <button type="submit" class="apple-submit-btn btn-submit-outflow" id="btn-submit-outflow">
             Save Money Out
           </button>
         </form>
@@ -386,6 +389,30 @@
             Create Project
           </button>
         </form>
+      </div>
+    </div>
+
+    <!-- SLIDE-UP BOTTOM SHEET: TRANSACTION ACTION MENU (iOS STYLE) -->
+    <div class="bottom-sheet-overlay" id="sheet-tx-action-overlay">
+      <div class="bottom-sheet" id="sheet-tx-action">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <h3 id="tx-action-title">Transaction Details</h3>
+          <button class="close-sheet" data-close="sheet-tx-action-overlay">&times;</button>
+        </div>
+
+        <div class="tx-action-summary-box" id="tx-action-summary">
+          <!-- Summary rendered dynamically -->
+        </div>
+
+        <div class="tx-action-buttons-group">
+          <button class="apple-action-btn-secondary" id="btn-edit-tx-action">
+            ✏️ Edit Entry
+          </button>
+          <button class="apple-action-btn-danger" id="btn-delete-tx-action">
+            🗑️ Delete Entry
+          </button>
+        </div>
       </div>
     </div>
 

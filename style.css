@@ -539,6 +539,13 @@ body {
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--apple-border-subtle);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.tx-row:hover,
+.tx-row:active {
+  background: var(--apple-card-hover);
 }
 
 .tx-row:last-child {
@@ -634,6 +641,25 @@ body {
   box-shadow: var(--shadow-apple);
 }
 
+.proj-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+
+.proj-client-subtitle {
+  font-size: 14px;
+  color: var(--apple-text-secondary);
+}
+
+.proj-budget-badge {
+  font-size: 13px;
+  color: var(--apple-blue);
+  font-weight: 600;
+}
+
 .apple-balance-display {
   background: var(--apple-bg);
   border-radius: 16px;
@@ -704,6 +730,70 @@ body {
   font-weight: 700;
   color: var(--apple-text);
   margin-bottom: 10px;
+}
+
+/* TRANSACTION ACTION SHEET (iOS STYLE) */
+.tx-action-summary-box {
+  background: var(--apple-bg);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tx-action-row-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.tx-action-row-item .lbl { color: var(--apple-text-secondary); }
+.tx-action-row-item .val { font-weight: 600; color: var(--apple-text); }
+
+.tx-action-buttons-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.apple-action-btn-secondary {
+  width: 100%;
+  height: 48px;
+  background: #e5e5ea;
+  color: var(--apple-text);
+  border: none;
+  border-radius: var(--radius-capsule);
+  font-family: var(--font-apple);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-apple);
+}
+
+.apple-action-btn-secondary:active {
+  background: #d1d1d6;
+  transform: scale(0.98);
+}
+
+.apple-action-btn-danger {
+  width: 100%;
+  height: 48px;
+  background: var(--apple-red-bg);
+  color: var(--apple-red);
+  border: 1px solid var(--apple-red-border);
+  border-radius: var(--radius-capsule);
+  font-family: var(--font-apple);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-apple);
+}
+
+.apple-action-btn-danger:active {
+  background: rgba(255, 59, 48, 0.2);
+  transform: scale(0.98);
 }
 
 /* BOTTOM NAVIGATOR BAR */
