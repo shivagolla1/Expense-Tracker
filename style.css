@@ -585,6 +585,12 @@ body {
   gap: 20px;
 }
 
+.detail-top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .apple-back-btn {
   background: none;
   border: none;
@@ -595,6 +601,26 @@ body {
   align-items: center;
   gap: 4px;
   cursor: pointer;
+}
+
+.apple-delete-proj-btn {
+  background: none;
+  border: none;
+  color: var(--apple-red);
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: var(--radius-capsule);
+  transition: var(--transition-apple);
+}
+
+.apple-delete-proj-btn:hover,
+.apple-delete-proj-btn:active {
+  background: var(--apple-red-bg);
 }
 
 .project-hero-card {

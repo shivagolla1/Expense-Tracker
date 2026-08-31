@@ -6,9 +6,9 @@
   'use strict';
 
   const STORAGE_KEYS = {
-    PROJECTS: 'aakruthee_projects_prod_v1',
-    TRANSACTIONS: 'aakruthee_transactions_prod_v1',
-    PASSKEY_CRED_ID: 'aakruthee_passkey_cred_id_prod_v1'
+    PROJECTS: 'aakruthee_projects_prod_v2',
+    TRANSACTIONS: 'aakruthee_transactions_prod_v2',
+    PASSKEY_CRED_ID: 'aakruthee_passkey_cred_id_prod_v2'
   };
 
   class AakrutheeApp {
@@ -30,7 +30,7 @@
       this.initAppLifecycleSecurity();
       this.initStrictLock();
 
-      // Clear any legacy dummy data in browser memory
+      // Clear legacy dummy cache
       this.clearLegacyDummyCache();
 
       // Load Clean Data from Cloud API with local cache fallback
@@ -38,8 +38,7 @@
     }
 
     clearLegacyDummyCache() {
-      // Clear old legacy keys containing sample data
-      ['aakruthee_projects_v10', 'aakruthee_transactions_v10', 'aakruthee_projects_v9', 'aakruthee_transactions_v9', 'aakruthee_projects_v8', 'aakruthee_transactions_v8', 'atelier_flow_projects_v4', 'atelier_flow_transactions_v4'].forEach(key => {
+      ['aakruthee_projects_v10', 'aakruthee_transactions_v10', 'aakruthee_projects_v9', 'aakruthee_transactions_v9', 'aakruthee_projects_v8', 'aakruthee_transactions_v8', 'atelier_flow_projects_v4', 'atelier_flow_transactions_v4', 'aakruthee_projects_prod_v1', 'aakruthee_transactions_prod_v1'].forEach(key => {
         localStorage.removeItem(key);
       });
     }
@@ -51,8 +50,9 @@
         if (response.ok) {
           const data = await response.json();
           if (data.success) {
-            this.projects = data.projects || [];
-            this.transactions = data.transactions || [];
+            // Filter out dummy sample IDs just in case
+            this.projects = (data.projects || []).filter(p => !['proj-1', 'proj-2', 'proj-3'].includes(p.id));
+            this.transactions = (data.transactions || []).filter(t => !['tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106'].includes(t.id) && !['proj-1', 'proj-2', 'proj-3'].includes(t.projectId));
             this.saveLocalCache();
             this.render();
             return;
@@ -105,7 +105,7 @@
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.transactions) {
-            this.transactions = data.transactions;
+            this.transactions = data.transactions.filter(t => !['tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106'].includes(t.id) && !['proj-1', 'proj-2', 'proj-3'].includes(t.projectId));
             this.saveLocalCache();
             this.render();
           }
@@ -130,13 +130,43 @@
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.projects) {
-            this.projects = data.projects;
+            this.projects = data.projects.filter(p => !['proj-1', 'proj-2', 'proj-3'].includes(p.id));
             this.saveLocalCache();
             this.render();
           }
         }
       } catch (err) {
         console.log('Failed to post project to Cloud API, saved locally:', err);
+      }
+    }
+
+    async deleteProjectFromCloud(projectId) {
+      if (!projectId) return;
+      const proj = this.projects.find(p => p.id === projectId);
+      const projName = proj ? proj.name : 'this project';
+
+      if (!confirm(`Are you sure you want to delete "${projName}" and all its transactions?`)) {
+        return;
+      }
+
+      this.projects = this.projects.filter(p => p.id !== projectId);
+      this.transactions = this.transactions.filter(t => t.projectId !== projectId);
+      this.saveLocalCache();
+      this.switchTab('view-dashboard');
+
+      try {
+        const response = await fetch(`/api/projects/${projectId}`, { method: 'DELETE' });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            this.projects = (data.projects || []).filter(p => !['proj-1', 'proj-2', 'proj-3'].includes(p.id));
+            this.transactions = (data.transactions || []).filter(t => !['tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106'].includes(t.id));
+            this.saveLocalCache();
+            this.render();
+          }
+        }
+      } catch (err) {
+        console.log('Failed to delete project on server, updated locally:', err);
       }
     }
 
@@ -163,6 +193,8 @@
 
       this.viewProjectDetail = document.getElementById('view-project-detail');
       this.btnBackToDashboard = document.getElementById('btn-back-to-dashboard');
+      this.btnDeleteProject = document.getElementById('btn-delete-project');
+
       this.fullProjTitle = document.getElementById('full-proj-title');
       this.fullProjClient = document.getElementById('full-proj-client');
       this.fullProjBalance = document.getElementById('full-proj-balance');
@@ -203,6 +235,7 @@
 
       this.btnDashboardAddProj.addEventListener('click', () => this.openSheet(this.sheetProjectOverlay));
       this.btnBackToDashboard.addEventListener('click', () => this.switchTab('view-dashboard'));
+      this.btnDeleteProject.addEventListener('click', () => this.deleteProjectFromCloud(this.activeProjectId));
 
       this.fullProjBtnInflow.addEventListener('click', () => {
         this.openSheetWithProject(this.sheetInflowOverlay, this.activeProjectId);

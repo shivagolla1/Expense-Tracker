@@ -5,7 +5,6 @@ const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 8085;
-const IS_PROD = process.env.NODE_ENV === 'production';
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
@@ -69,17 +68,16 @@ async function initPostgresSchema() {
       );
     `);
 
-    // Auto-seed dummy data ONLY if SEED_DUMMY_DATA environment variable is explicitly set to "true"
-    if (process.env.SEED_DUMMY_DATA === 'true') {
-      const resProj = await client.query('SELECT COUNT(*) FROM projects');
-      if (parseInt(resProj.rows[0].count, 10) === 0) {
-        console.log('Seeding dummy data because SEED_DUMMY_DATA=true...');
-      }
-    }
+    // TARGETED PURGE: Delete ONLY the exact dummy seed records from PostgreSQL
+    await client.query(`
+      DELETE FROM transactions WHERE id IN ('tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106') OR project_id IN ('proj-1', 'proj-2', 'proj-3');
+      DELETE FROM projects WHERE id IN ('proj-1', 'proj-2', 'proj-3');
+    `);
+    console.log('Targeted purge completed: Dummy sample records deleted from PostgreSQL. User real data preserved.');
 
     client.release();
   } catch (err) {
-    console.error('Error initializing PostgreSQL schema:', err);
+    console.error('Error in PostgreSQL schema initialization/purge:', err);
   }
 }
 
@@ -91,7 +89,11 @@ function readJsonDB() {
     return emptyData;
   }
   try {
-    return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    const json = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    // Filter out dummy projects & transactions
+    const cleanProjects = (json.projects || []).filter(p => !['proj-1', 'proj-2', 'proj-3'].includes(p.id));
+    const cleanTransactions = (json.transactions || []).filter(t => !['tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106'].includes(t.id) && !['proj-1', 'proj-2', 'proj-3'].includes(t.projectId));
+    return { projects: cleanProjects, transactions: cleanTransactions };
   } catch (e) {
     return { projects: [], transactions: [] };
   }
@@ -185,19 +187,33 @@ app.post('/api/projects', async (req, res) => {
   res.json({ success: true, dbType: 'JSON_File', project: newProj, projects: jsonDB.projects });
 });
 
-// 4. CLEAR DEMO DATA / RESET DATABASE (ADMIN API)
-app.post('/api/clear-data', async (req, res) => {
+// 4. DELETE SPECIFIC PROJECT
+app.delete('/api/projects/:id', async (req, res) => {
+  const projId = req.params.id;
+  if (!projId) return res.status(400).json({ success: false, error: 'Project ID required' });
+
   if (usePostgres && pool) {
     try {
-      await pool.query('TRUNCATE transactions, projects RESTART IDENTITY CASCADE');
-      return res.json({ success: true, message: 'PostgreSQL database cleared.' });
+      await pool.query('DELETE FROM transactions WHERE project_id = $1', [projId]);
+      await pool.query('DELETE FROM projects WHERE id = $1', [projId]);
+
+      const projRes = await pool.query('SELECT id, name, client, budget, created_at as "createdAt" FROM projects ORDER BY created_at ASC');
+      const txRes = await pool.query('SELECT id, project_id as "projectId", type, amount, category, mode, note, date FROM transactions ORDER BY date DESC');
+      
+      const projects = projRes.rows.map(r => ({ ...r, budget: Number(r.budget) }));
+      const transactions = txRes.rows.map(r => ({ ...r, amount: Number(r.amount) }));
+
+      return res.json({ success: true, projects, transactions });
     } catch (err) {
-      console.error('Error clearing PostgreSQL database:', err);
+      console.error('Error deleting project from PostgreSQL:', err);
     }
   }
 
-  writeJsonDB({ projects: [], transactions: [] });
-  res.json({ success: true, message: 'JSON database cleared.' });
+  const jsonDB = readJsonDB();
+  jsonDB.projects = jsonDB.projects.filter(p => p.id !== projId);
+  jsonDB.transactions = jsonDB.transactions.filter(t => t.projectId !== projId);
+  writeJsonDB(jsonDB);
+  res.json({ success: true, projects: jsonDB.projects, transactions: jsonDB.transactions });
 });
 
 app.get('*', (req, res) => {
