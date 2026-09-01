@@ -256,7 +256,6 @@
     }
 
     async saveTransactionToCloud(newTx) {
-      const isEdit = !!this.editingTxId;
       if (this.editingTxId) {
         const idx = this.transactions.findIndex(t => t.id === this.editingTxId);
         if (idx !== -1) {
@@ -638,37 +637,47 @@
       }
     }
 
+    // IRONCLAD APP SWITCHER PRIVACY BLUR MASK
     initAppLifecycleSecurity() {
+      const lockPrivacyMask = () => {
+        document.body.classList.add('app-privacy-locked');
+        if (this.privacyShield) this.privacyShield.classList.add('active');
+        if (this.appleLockScreen) this.appleLockScreen.classList.add('active');
+        this.isUnlocked = false;
+      };
+
+      const unlockPrivacyMask = () => {
+        if (this.isUnlocked) {
+          document.body.classList.remove('app-privacy-locked');
+          if (this.privacyShield) this.privacyShield.classList.remove('active');
+          if (this.appleLockScreen) this.appleLockScreen.classList.remove('active');
+        }
+      };
+
+      // Instantly apply blur mask on background / app switch / focus loss
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') {
-          this.privacyShield.classList.add('active');
-          this.appleLockScreen.classList.add('active');
-          this.isUnlocked = false;
+          lockPrivacyMask();
         } else if (document.visibilityState === 'visible') {
-          this.privacyShield.classList.remove('active');
           if (!this.isUnlocked) {
+            lockPrivacyMask();
             setTimeout(() => this.handleUnlockButtonClick(), 150);
+          } else {
+            unlockPrivacyMask();
           }
         }
       });
 
-      window.addEventListener('pagehide', () => {
-        this.privacyShield.classList.add('active');
-        this.appleLockScreen.classList.add('active');
-        this.isUnlocked = false;
-      });
-
-      window.addEventListener('blur', () => {
-        this.privacyShield.classList.add('active');
-        this.appleLockScreen.classList.add('active');
-        this.isUnlocked = false;
+      ['pagehide', 'blur', 'freeze'].forEach(evt => {
+        window.addEventListener(evt, lockPrivacyMask);
       });
     }
 
     initStrictLock() {
       this.isUnlocked = false;
-      this.privacyShield.classList.remove('active');
-      this.appleLockScreen.classList.add('active');
+      document.body.classList.add('app-privacy-locked');
+      if (this.privacyShield) this.privacyShield.classList.remove('active');
+      if (this.appleLockScreen) this.appleLockScreen.classList.add('active');
 
       const savedCredId = localStorage.getItem(STORAGE_KEYS.PASSKEY_CRED_ID);
       if (savedCredId) {
@@ -794,16 +803,18 @@
 
     unlockAppSuccess() {
       this.isUnlocked = true;
-      this.appleLockScreen.classList.remove('active');
-      this.privacyShield.classList.remove('active');
+      document.body.classList.remove('app-privacy-locked');
+      if (this.appleLockScreen) this.appleLockScreen.classList.remove('active');
+      if (this.privacyShield) this.privacyShield.classList.remove('active');
 
       this.checkFirstTimeNotificationOnboarding();
     }
 
     lockApp() {
       this.isUnlocked = false;
-      this.privacyShield.classList.remove('active');
-      this.appleLockScreen.classList.add('active');
+      document.body.classList.add('app-privacy-locked');
+      if (this.privacyShield) this.privacyShield.classList.remove('active');
+      if (this.appleLockScreen) this.appleLockScreen.classList.add('active');
     }
 
     switchTab(tabId) {

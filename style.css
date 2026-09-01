@@ -73,6 +73,24 @@ body {
   box-shadow: 0 0 50px rgba(0, 0, 0, 0.06);
 }
 
+/* IRONCLAD PRIVACY BLUR MASK FOR iOS APP SWITCHER */
+body.app-privacy-locked .main-content,
+body.app-privacy-locked .apple-bottom-nav,
+body.app-privacy-locked .app-header {
+  filter: blur(40px) !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transition: none !important;
+}
+
+body.app-privacy-locked .privacy-shield {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transition: none !important;
+  z-index: 99999 !important;
+}
+
 /* FLOATING APPLE TOAST CONFIRMATION BANNER */
 .apple-toast-container {
   position: fixed;
@@ -150,12 +168,13 @@ body {
   align-items: center;
   justify-content: center;
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.2s ease-in-out;
 }
 
 .privacy-shield.active {
   opacity: 1;
+  visibility: visible;
   pointer-events: auto;
 }
 
