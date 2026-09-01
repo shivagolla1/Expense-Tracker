@@ -8,7 +8,8 @@
   const STORAGE_KEYS = {
     PROJECTS: 'aakruthee_projects_prod_v3',
     TRANSACTIONS: 'aakruthee_transactions_prod_v3',
-    PASSKEY_CRED_ID: 'aakruthee_passkey_cred_id_prod_v3'
+    PASSKEY_CRED_ID: 'aakruthee_passkey_cred_id_prod_v3',
+    NOTIF_ONBOARDED: 'aakruthee_notif_onboarded_v1'
   };
 
   class AakrutheeApp {
@@ -22,6 +23,7 @@
 
       this.selectedTxForAction = null;
       this.editingTxId = null;
+      this.vapidPublicKey = null;
 
       this.init();
     }
@@ -33,9 +35,112 @@
       this.checkOfflineStatus();
       this.initAppLifecycleSecurity();
       this.initStrictLock();
+      this.registerServiceWorker();
 
       this.clearLegacyDummyCache();
       await this.loadCloudData();
+      await this.fetchVapidKey();
+    }
+
+    async registerServiceWorker() {
+      if ('serviceWorker' in navigator) {
+        try {
+          const reg = await navigator.serviceWorker.register('/sw.js');
+          this.swRegistration = reg;
+          console.log('Service Worker registered successfully:', reg.scope);
+        } catch (err) {
+          console.log('Service Worker registration failed:', err);
+        }
+      }
+    }
+
+    async fetchVapidKey() {
+      try {
+        const res = await fetch('/api/vapid-public-key');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) this.vapidPublicKey = data.publicKey;
+        }
+      } catch (err) {
+        console.log('Error fetching VAPID public key:', err);
+      }
+    }
+
+    showToast(message, type = 'success') {
+      if (!this.toastContainer) return;
+      const toast = document.createElement('div');
+      toast.className = `apple-toast ${type}`;
+      const icon = type === 'success' ? '✓' : '✕';
+      toast.innerHTML = `<span class="toast-icon">${icon}</span> <span>${this.escapeHTML(message)}</span>`;
+
+      this.toastContainer.appendChild(toast);
+
+      setTimeout(() => toast.classList.add('active'), 50);
+
+      setTimeout(() => {
+        toast.classList.remove('active');
+        setTimeout(() => toast.remove(), 350);
+      }, 2800);
+    }
+
+    checkFirstTimeNotificationOnboarding() {
+      const onboarded = localStorage.getItem(STORAGE_KEYS.NOTIF_ONBOARDED);
+      if (!onboarded && ('Notification' in window)) {
+        setTimeout(() => {
+          this.openSheet(this.sheetNotifOnboardingOverlay);
+        }, 800);
+      }
+    }
+
+    async handleEnableNotifications() {
+      localStorage.setItem(STORAGE_KEYS.NOTIF_ONBOARDED, 'true');
+      this.closeSheet(this.sheetNotifOnboardingOverlay);
+
+      try {
+        if (!('Notification' in window)) {
+          this.showToast('Notifications not supported on this browser', 'error');
+          return;
+        }
+
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          await this.subscribeUserToWebPush();
+          this.showToast('✓ Daily 9 AM & 9 PM Reminders Enabled!', 'success');
+        } else {
+          this.showToast('Notifications permission not granted', 'error');
+        }
+      } catch (err) {
+        console.log('Error requesting notification permission:', err);
+      }
+    }
+
+    async subscribeUserToWebPush() {
+      if (!this.swRegistration || !this.vapidPublicKey) return;
+      try {
+        const sub = await this.swRegistration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: this.urlBase64ToUint8Array(this.vapidPublicKey)
+        });
+
+        await fetch('/api/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(sub)
+        });
+      } catch (err) {
+        console.log('Failed to subscribe user to push:', err);
+      }
+    }
+
+    urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+      return outputArray;
     }
 
     clearLegacyDummyCache() {
@@ -53,7 +158,6 @@
 
     formatIndianNumberString(valStr) {
       if (!valStr) return '';
-      // Retain cursor position / clean digits
       const digits = String(valStr).replace(/[^0-9.]/g, '');
       if (!digits) return '';
       const parts = digits.split('.');
@@ -152,8 +256,8 @@
     }
 
     async saveTransactionToCloud(newTx) {
+      const isEdit = !!this.editingTxId;
       if (this.editingTxId) {
-        // UPDATE EXISTING TRANSACTION
         const idx = this.transactions.findIndex(t => t.id === this.editingTxId);
         if (idx !== -1) {
           this.transactions[idx] = { ...this.transactions[idx], ...newTx };
@@ -180,10 +284,10 @@
         } catch (err) {
           console.log('Failed to update transaction on cloud, saved locally:', err);
         }
+        this.showToast(`Updated entry: ${this.formatCurrency(newTx.amount)}`, 'success');
         return;
       }
 
-      // CREATE NEW TRANSACTION
       this.transactions.unshift(newTx);
       this.saveLocalCache();
       this.render();
@@ -206,6 +310,9 @@
       } catch (err) {
         console.log('Failed to post transaction to Cloud API, saved locally:', err);
       }
+
+      const typeLabel = newTx.type === 'expense' ? 'Money Out' : 'Money In';
+      this.showToast(`Saved ${typeLabel}: ${this.formatCurrency(newTx.amount)}`, 'success');
     }
 
     async deleteTransactionFromCloud(txId) {
@@ -214,6 +321,7 @@
       this.transactions = this.transactions.filter(t => t.id !== txId);
       this.saveLocalCache();
       this.render();
+      this.showToast('Transaction deleted', 'success');
 
       try {
         const response = await fetch(`/api/transactions/${txId}`, { method: 'DELETE' });
@@ -234,6 +342,7 @@
       this.projects.push(newProj);
       this.saveLocalCache();
       this.render();
+      this.showToast(`Project "${newProj.name}" created`, 'success');
 
       try {
         const response = await fetch('/api/projects', {
@@ -268,6 +377,7 @@
       this.transactions = this.transactions.filter(t => t.projectId !== projectId);
       this.saveLocalCache();
       this.switchTab('view-dashboard');
+      this.showToast(`Deleted project "${projName}"`, 'success');
 
       try {
         const response = await fetch(`/api/projects/${projectId}`, { method: 'DELETE' });
@@ -286,6 +396,8 @@
     }
 
     cacheDOMElements() {
+      this.toastContainer = document.getElementById('apple-toast-container');
+
       // Security Elements
       this.privacyShield = document.getElementById('privacy-shield');
       this.appleLockScreen = document.getElementById('apple-lock-screen');
@@ -326,6 +438,7 @@
       this.sheetOutflowOverlay = document.getElementById('sheet-outflow-overlay');
       this.sheetProjectOverlay = document.getElementById('sheet-project-overlay');
       this.sheetTxActionOverlay = document.getElementById('sheet-tx-action-overlay');
+      this.sheetNotifOnboardingOverlay = document.getElementById('sheet-notif-onboarding-overlay');
 
       this.formInflow = document.getElementById('form-inflow');
       this.formOutflow = document.getElementById('form-outflow');
@@ -342,6 +455,9 @@
       this.txActionSummary = document.getElementById('tx-action-summary');
       this.btnEditTxAction = document.getElementById('btn-edit-tx-action');
       this.btnDeleteTxAction = document.getElementById('btn-delete-tx-action');
+
+      this.btnEnableNotifications = document.getElementById('btn-enable-notifications');
+      this.btnSkipNotifications = document.getElementById('btn-skip-notifications');
     }
 
     bindEvents() {
@@ -413,6 +529,13 @@
         }
       });
 
+      // Notification Onboarding Events
+      this.btnEnableNotifications.addEventListener('click', () => this.handleEnableNotifications());
+      this.btnSkipNotifications.addEventListener('click', () => {
+        localStorage.setItem(STORAGE_KEYS.NOTIF_ONBOARDED, 'true');
+        this.closeSheet(this.sheetNotifOnboardingOverlay);
+      });
+
       document.querySelectorAll('.close-sheet').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const overlayId = e.currentTarget.getAttribute('data-close');
@@ -441,7 +564,6 @@
       });
     }
 
-    // OPEN iOS TRANSACTION ACTION SHEET
     openTxActionSheet(tx) {
       this.selectedTxForAction = tx;
       const proj = this.projects.find(p => p.id === tx.projectId) || { name: 'General Project' };
@@ -516,7 +638,6 @@
       }
     }
 
-    // iOS APP SWITCHER PREVIEW PROTECTION & AUTOMATIC RESUME UNLOCK
     initAppLifecycleSecurity() {
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') {
@@ -675,6 +796,8 @@
       this.isUnlocked = true;
       this.appleLockScreen.classList.remove('active');
       this.privacyShield.classList.remove('active');
+
+      this.checkFirstTimeNotificationOnboarding();
     }
 
     lockApp() {

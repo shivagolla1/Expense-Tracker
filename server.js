@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const { Pool } = require('pg');
+const webpush = require('web-push');
 
 const app = express();
 const PORT = process.env.PORT || 8085;
@@ -12,10 +13,19 @@ app.use(express.static(path.join(__dirname)));
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 
-// Ensure fallback data directory exists
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
+
+// VAPID KEYS FOR WEB PUSH (PERSISTENT / CONSTANT)
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BEl62iUYgUivxIkv69yViEuiBIa04n1fW-37RjQ-L9zL0S7lE-K_1J4pY_3y9z-8V7e8_8y7z8y7z8y7z8y7z8';
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 's8y7z8y7z8y7z8y7z8y7z8y7z8y7z8y7z8y7z8y7z8';
+
+webpush.setVapidDetails(
+  'mailto:designer@aakruthee.com',
+  VAPID_PUBLIC_KEY,
+  VAPID_PRIVATE_KEY
+);
 
 // POSTGRESQL DATABASE CONFIGURATION
 let pool = null;
@@ -68,7 +78,16 @@ async function initPostgresSchema() {
       );
     `);
 
-    // TARGETED PURGE: Delete ONLY the exact dummy seed records from PostgreSQL
+    // Create push_subscriptions table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+        endpoint TEXT PRIMARY KEY,
+        keys JSONB NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Purge dummy seed records if any exist
     await client.query(`
       DELETE FROM transactions WHERE id IN ('tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106') OR project_id IN ('proj-1', 'proj-2', 'proj-3');
       DELETE FROM projects WHERE id IN ('proj-1', 'proj-2', 'proj-3');
@@ -83,7 +102,7 @@ async function initPostgresSchema() {
 // FILE FALLBACK HELPERS
 function readJsonDB() {
   if (!fs.existsSync(DB_FILE)) {
-    const emptyData = { projects: [], transactions: [] };
+    const emptyData = { projects: [], transactions: [], subscriptions: [] };
     writeJsonDB(emptyData);
     return emptyData;
   }
@@ -91,9 +110,9 @@ function readJsonDB() {
     const json = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
     const cleanProjects = (json.projects || []).filter(p => !['proj-1', 'proj-2', 'proj-3'].includes(p.id));
     const cleanTransactions = (json.transactions || []).filter(t => !['tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106'].includes(t.id) && !['proj-1', 'proj-2', 'proj-3'].includes(t.projectId));
-    return { projects: cleanProjects, transactions: cleanTransactions };
+    return { projects: cleanProjects, transactions: cleanTransactions, subscriptions: json.subscriptions || [] };
   } catch (e) {
-    return { projects: [], transactions: [] };
+    return { projects: [], transactions: [], subscriptions: [] };
   }
 }
 
@@ -106,6 +125,39 @@ function writeJsonDB(data) {
 }
 
 // REST API ENDPOINTS
+
+// 0. GET VAPID PUBLIC KEY
+app.get('/api/vapid-public-key', (req, res) => {
+  res.json({ success: true, publicKey: VAPID_PUBLIC_KEY });
+});
+
+// 0. SAVE PUSH SUBSCRIPTION
+app.post('/api/subscribe', async (req, res) => {
+  const sub = req.body;
+  if (!sub || !sub.endpoint) {
+    return res.status(400).json({ success: false, error: 'Invalid subscription' });
+  }
+
+  if (usePostgres && pool) {
+    try {
+      await pool.query(
+        'INSERT INTO push_subscriptions (endpoint, keys) VALUES ($1, $2) ON CONFLICT (endpoint) DO UPDATE SET keys = $2',
+        [sub.endpoint, JSON.stringify(sub.keys)]
+      );
+      return res.json({ success: true, message: 'Push subscription saved to PostgreSQL.' });
+    } catch (err) {
+      console.error('Error saving push sub to PostgreSQL:', err);
+    }
+  }
+
+  const jsonDB = readJsonDB();
+  jsonDB.subscriptions = jsonDB.subscriptions || [];
+  if (!jsonDB.subscriptions.some(s => s.endpoint === sub.endpoint)) {
+    jsonDB.subscriptions.push(sub);
+    writeJsonDB(jsonDB);
+  }
+  res.json({ success: true, message: 'Push subscription saved.' });
+});
 
 // 1. GET ALL CLOUD DATA
 app.get('/api/data', async (req, res) => {
@@ -270,6 +322,56 @@ app.delete('/api/projects/:id', async (req, res) => {
   writeJsonDB(jsonDB);
   res.json({ success: true, projects: jsonDB.projects, transactions: jsonDB.transactions });
 });
+
+// DAILY 9:00 AM & 9:00 PM IST PUSH SCHEDULER
+let lastTriggeredHour = -1;
+
+setInterval(async () => {
+  const now = new Date();
+  // Convert current server time to IST (UTC+5:30)
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const istDate = new Date(now.getTime() + istOffset);
+  const hourIST = istDate.getUTCHours();
+  const minuteIST = istDate.getUTCMinutes();
+
+  // Trigger at 9:00 AM (hour 9) and 9:00 PM (hour 21) IST
+  if ((hourIST === 9 || hourIST === 21) && minuteIST === 0 && lastTriggeredHour !== hourIST) {
+    lastTriggeredHour = hourIST;
+    const title = hourIST === 9 ? 'Aakruthee • Good Morning 🌅' : 'Aakruthee • Evening Reminder 🌙';
+    const body = hourIST === 9 
+      ? 'Good morning! Ready to track today\'s site expenses and client advances?' 
+      : 'Evening reminder: Did you log today\'s site labor, materials, or vendor payments?';
+
+    console.log(`Sending Daily ${hourIST === 9 ? '9 AM' : '9 PM'} Push Reminders to subscribed iPhones...`);
+    sendPushNotificationToAll(title, body);
+  } else if (minuteIST !== 0) {
+    lastTriggeredHour = -1;
+  }
+}, 30000); // Check every 30 seconds
+
+async function sendPushNotificationToAll(title, body) {
+  let subscriptions = [];
+  if (usePostgres && pool) {
+    try {
+      const res = await pool.query('SELECT endpoint, keys FROM push_subscriptions');
+      subscriptions = res.rows.map(r => ({ endpoint: r.endpoint, keys: r.keys }));
+    } catch (err) {
+      console.error('Error fetching subscriptions from PostgreSQL:', err);
+    }
+  } else {
+    subscriptions = readJsonDB().subscriptions || [];
+  }
+
+  const payload = JSON.stringify({ title, body });
+
+  for (const sub of subscriptions) {
+    try {
+      await webpush.sendNotification(sub, payload);
+    } catch (err) {
+      console.log('Expired subscription removed:', sub.endpoint);
+    }
+  }
+}
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));

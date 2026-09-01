@@ -22,6 +22,9 @@
 <body>
   <div id="app" class="app-container">
     
+    <!-- FLOATING APPLE TOAST CONFIRMATION BANNER -->
+    <div class="apple-toast-container" id="apple-toast-container"></div>
+
     <!-- PRIVACY SHIELD FOR iOS APP SWITCHER PREVIEW PROTECTION -->
     <div class="privacy-shield" id="privacy-shield">
       <div class="shield-content">
@@ -415,6 +418,26 @@
           <button class="apple-action-btn-danger" id="btn-delete-tx-action">
             🗑️ Delete Entry
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE-UP BOTTOM SHEET: FIRST-TIME NOTIFICATION ONBOARDING MODAL -->
+    <div class="bottom-sheet-overlay" id="sheet-notif-onboarding-overlay">
+      <div class="bottom-sheet" id="sheet-notif-onboarding">
+        <div class="sheet-handle"></div>
+        <div class="notif-onboarding-content">
+          <div class="notif-badge-icon">🔔</div>
+          <h3>Daily Reminders</h3>
+          <p>Get a gentle reminder at 9:00 AM & 9:00 PM to log today's site expenses and client advances.</p>
+          <div class="notif-modal-actions">
+            <button class="apple-submit-btn" id="btn-enable-notifications">
+              Enable Notifications
+            </button>
+            <button class="apple-action-btn-secondary" id="btn-skip-notifications">
+              Not Now
+            </button>
+          </div>
         </div>
       </div>
     </div>
