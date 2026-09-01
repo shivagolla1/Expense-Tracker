@@ -12,20 +12,46 @@ app.use(express.static(path.join(__dirname)));
 
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
+const VAPID_FILE = path.join(DATA_DIR, 'vapid.json');
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// VAPID KEYS FOR WEB PUSH (PERSISTENT / CONSTANT)
-const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BEl62iUYgUivxIkv69yViEuiBIa04n1fW-37RjQ-L9zL0S7lE-K_1J4pY_3y9z-8V7e8_8y7z8y7z8y7z8y7z8';
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 's8y7z8y7z8y7z8y7z8y7z8y7z8y7z8y7z8y7z8y7z8';
+// GENERATE OR LOAD VALID VAPID KEYS
+let vapidKeys = null;
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  vapidKeys = {
+    publicKey: process.env.VAPID_PUBLIC_KEY,
+    privateKey: process.env.VAPID_PRIVATE_KEY
+  };
+} else if (fs.existsSync(VAPID_FILE)) {
+  try {
+    vapidKeys = JSON.parse(fs.readFileSync(VAPID_FILE, 'utf8'));
+  } catch (e) {
+    vapidKeys = null;
+  }
+}
 
-webpush.setVapidDetails(
-  'mailto:designer@aakruthee.com',
-  VAPID_PUBLIC_KEY,
-  VAPID_PRIVATE_KEY
-);
+if (!vapidKeys || !vapidKeys.publicKey || !vapidKeys.privateKey) {
+  vapidKeys = webpush.generateVAPIDKeys();
+  try {
+    fs.writeFileSync(VAPID_FILE, JSON.stringify(vapidKeys, null, 2), 'utf8');
+  } catch (e) {
+    console.error('Error saving VAPID keys:', e);
+  }
+}
+
+try {
+  webpush.setVapidDetails(
+    'mailto:designer@aakruthee.com',
+    vapidKeys.publicKey,
+    vapidKeys.privateKey
+  );
+  console.log('VAPID Web Push details configured successfully.');
+} catch (err) {
+  console.error('Failed to configure VAPID details:', err);
+}
 
 // POSTGRESQL DATABASE CONFIGURATION
 let pool = null;
@@ -128,7 +154,7 @@ function writeJsonDB(data) {
 
 // 0. GET VAPID PUBLIC KEY
 app.get('/api/vapid-public-key', (req, res) => {
-  res.json({ success: true, publicKey: VAPID_PUBLIC_KEY });
+  res.json({ success: true, publicKey: vapidKeys.publicKey });
 });
 
 // 0. SAVE PUSH SUBSCRIPTION
@@ -328,13 +354,11 @@ let lastTriggeredHour = -1;
 
 setInterval(async () => {
   const now = new Date();
-  // Convert current server time to IST (UTC+5:30)
   const istOffset = 5.5 * 60 * 60 * 1000;
   const istDate = new Date(now.getTime() + istOffset);
   const hourIST = istDate.getUTCHours();
   const minuteIST = istDate.getUTCMinutes();
 
-  // Trigger at 9:00 AM (hour 9) and 9:00 PM (hour 21) IST
   if ((hourIST === 9 || hourIST === 21) && minuteIST === 0 && lastTriggeredHour !== hourIST) {
     lastTriggeredHour = hourIST;
     const title = hourIST === 9 ? 'Aakruthee • Good Morning 🌅' : 'Aakruthee • Evening Reminder 🌙';
@@ -347,7 +371,7 @@ setInterval(async () => {
   } else if (minuteIST !== 0) {
     lastTriggeredHour = -1;
   }
-}, 30000); // Check every 30 seconds
+}, 30000);
 
 async function sendPushNotificationToAll(title, body) {
   let subscriptions = [];
