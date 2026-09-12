@@ -25,6 +25,7 @@
 
       this.selectedTxForAction = null;
       this.editingTxId = null;
+      this.convertingLeadId = null;
       this.vapidPublicKey = null;
 
       this.init();
@@ -327,15 +328,15 @@
       }
     }
 
-    async deleteLeadFromCloud(leadId) {
+    async deleteLeadFromCloud(leadId, silent = false) {
       const lead = this.leads.find(l => l.id === leadId);
       if (!lead) return;
-      if (!confirm(`Delete lead "${lead.name}"?`)) return;
+      if (!silent && !confirm(`Delete lead "${lead.name}"?`)) return;
 
       this.leads = this.leads.filter(l => l.id !== leadId);
       this.saveLocalCache();
       this.render();
-      this.showToast(`Deleted lead "${lead.name}"`, 'success');
+      if (!silent) this.showToast(`Deleted lead "${lead.name}"`, 'success');
 
       try {
         const response = await fetch(`/api/leads/${leadId}`, { method: 'DELETE' });
@@ -353,6 +354,7 @@
     }
 
     async convertLeadToProject(lead) {
+      this.convertingLeadId = lead.id;
       document.getElementById('proj-name').value = `${lead.name} Villa Project`;
       document.getElementById('proj-client').value = lead.name;
       this.openSheet(this.sheetProjectOverlay);
@@ -444,7 +446,15 @@
       this.projects.push(newProj);
       this.saveLocalCache();
       this.render();
-      this.showToast(`Project "${newProj.name}" created`, 'success');
+
+      if (this.convertingLeadId) {
+        const leadId = this.convertingLeadId;
+        this.convertingLeadId = null;
+        await this.deleteLeadFromCloud(leadId, true);
+        this.showToast(`Converted lead into Project "${newProj.name}"!`, 'success');
+      } else {
+        this.showToast(`Project "${newProj.name}" created`, 'success');
+      }
 
       try {
         const response = await fetch('/api/projects', {
@@ -599,6 +609,7 @@
       });
 
       this.btnDashboardAddProj.addEventListener('click', () => {
+        this.convertingLeadId = null;
         document.getElementById('proj-budget-subtext').textContent = '';
         this.openSheet(this.sheetProjectOverlay);
       });
