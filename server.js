@@ -12,43 +12,22 @@ app.use(express.static(path.join(__dirname)));
 
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
-const VAPID_FILE = path.join(DATA_DIR, 'vapid.json');
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// GENERATE OR LOAD VALID VAPID KEYS
-let vapidKeys = null;
-if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
-  vapidKeys = {
-    publicKey: process.env.VAPID_PUBLIC_KEY,
-    privateKey: process.env.VAPID_PRIVATE_KEY
-  };
-} else if (fs.existsSync(VAPID_FILE)) {
-  try {
-    vapidKeys = JSON.parse(fs.readFileSync(VAPID_FILE, 'utf8'));
-  } catch (e) {
-    vapidKeys = null;
-  }
-}
-
-if (!vapidKeys || !vapidKeys.publicKey || !vapidKeys.privateKey) {
-  vapidKeys = webpush.generateVAPIDKeys();
-  try {
-    fs.writeFileSync(VAPID_FILE, JSON.stringify(vapidKeys, null, 2), 'utf8');
-  } catch (e) {
-    console.error('Error saving VAPID keys:', e);
-  }
-}
+// PERMANENT FIXED VAPID KEYS (Ensures keys NEVER change across Railway deploys / restarts)
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BChb-Hd5GOzgzel623xhmbe41XUslAgDwX6zgTP9HRrIHv76ouLGjLjEakRZBgAP8_zAUgKf4hHB9nPDAkFiA_s';
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'fMW3O5yLmeV-MP4C2nlJOiHkZReT-A4WMPWm8WoHu6A';
 
 try {
   webpush.setVapidDetails(
     'mailto:designer@aakruthee.com',
-    vapidKeys.publicKey,
-    vapidKeys.privateKey
+    VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY
   );
-  console.log('VAPID Web Push details configured successfully.');
+  console.log('Permanent VAPID Web Push keys initialized successfully.');
 } catch (err) {
   console.error('Failed to configure VAPID details:', err);
 }
@@ -154,7 +133,7 @@ function writeJsonDB(data) {
 
 // 0. GET VAPID PUBLIC KEY
 app.get('/api/vapid-public-key', (req, res) => {
-  res.json({ success: true, publicKey: vapidKeys.publicKey });
+  res.json({ success: true, publicKey: VAPID_PUBLIC_KEY });
 });
 
 // 0. SAVE PUSH SUBSCRIPTION
@@ -170,6 +149,7 @@ app.post('/api/subscribe', async (req, res) => {
         'INSERT INTO push_subscriptions (endpoint, keys) VALUES ($1, $2) ON CONFLICT (endpoint) DO UPDATE SET keys = $2',
         [sub.endpoint, JSON.stringify(sub.keys)]
       );
+      console.log('Successfully saved push subscription to PostgreSQL:', sub.endpoint.substring(0, 40) + '...');
       return res.json({ success: true, message: 'Push subscription saved to PostgreSQL.' });
     } catch (err) {
       console.error('Error saving push sub to PostgreSQL:', err);
@@ -182,7 +162,23 @@ app.post('/api/subscribe', async (req, res) => {
     jsonDB.subscriptions.push(sub);
     writeJsonDB(jsonDB);
   }
+  console.log('Successfully saved push subscription to JSON DB:', sub.endpoint.substring(0, 40) + '...');
   res.json({ success: true, message: 'Push subscription saved.' });
+});
+
+// 0. SEND IMMEDIATE TEST PUSH NOTIFICATION
+app.post('/api/test-push', async (req, res) => {
+  console.log('Triggering instant Test Push Notification to all subscribed devices...');
+  const title = 'Aakruthee • Test Push 🔔';
+  const body = '✓ Push notifications are active and working on your iPhone!';
+  
+  const results = await sendPushNotificationToAll(title, body);
+  res.json({
+    success: true,
+    message: `Test push sent to ${results.sentCount} devices.`,
+    sentCount: results.sentCount,
+    failedCount: results.failedCount
+  });
 });
 
 // 1. GET ALL CLOUD DATA
@@ -367,7 +363,7 @@ setInterval(async () => {
       : 'Evening reminder: Did you log today\'s site labor, materials, or vendor payments?';
 
     console.log(`Sending Daily ${hourIST === 9 ? '9 AM' : '9 PM'} Push Reminders to subscribed iPhones...`);
-    sendPushNotificationToAll(title, body);
+    await sendPushNotificationToAll(title, body);
   } else if (minuteIST !== 0) {
     lastTriggeredHour = -1;
   }
@@ -387,14 +383,35 @@ async function sendPushNotificationToAll(title, body) {
   }
 
   const payload = JSON.stringify({ title, body });
+  let sentCount = 0;
+  let failedCount = 0;
 
   for (const sub of subscriptions) {
     try {
       await webpush.sendNotification(sub, payload);
+      sentCount++;
+      console.log('Successfully sent Web Push to endpoint:', sub.endpoint.substring(0, 40) + '...');
     } catch (err) {
-      console.log('Expired subscription removed:', sub.endpoint);
+      failedCount++;
+      console.error('Failed to send Web Push (status code:', err.statusCode, '):', err.message);
+
+      // Clean up stale or expired subscriptions (404, 410 Gone)
+      if (err.statusCode === 404 || err.statusCode === 410) {
+        console.log('Removing expired subscription:', sub.endpoint.substring(0, 40) + '...');
+        if (usePostgres && pool) {
+          try {
+            await pool.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [sub.endpoint]);
+          } catch (e) {}
+        } else {
+          const jsonDB = readJsonDB();
+          jsonDB.subscriptions = (jsonDB.subscriptions || []).filter(s => s.endpoint !== sub.endpoint);
+          writeJsonDB(jsonDB);
+        }
+      }
     }
   }
+
+  return { sentCount, failedCount };
 }
 
 app.get('*', (req, res) => {

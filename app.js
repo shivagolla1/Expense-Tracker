@@ -35,7 +35,7 @@
       this.checkOfflineStatus();
       this.initAppLifecycleSecurity();
       this.initStrictLock();
-      this.registerServiceWorker();
+      await this.registerServiceWorker();
 
       this.clearLegacyDummyCache();
       await this.loadCloudData();
@@ -107,26 +107,72 @@
           await this.subscribeUserToWebPush();
           this.showToast('✓ Daily 9 AM & 9 PM Reminders Enabled!', 'success');
         } else {
-          this.showToast('Notifications permission not granted', 'error');
+          this.showToast('Notification permission denied in iOS Settings', 'error');
         }
       } catch (err) {
         console.log('Error requesting notification permission:', err);
       }
     }
 
-    async subscribeUserToWebPush() {
-      if (!this.swRegistration || !this.vapidPublicKey) return;
+    async triggerTestPushNotification() {
       try {
-        const sub = await this.swRegistration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: this.urlBase64ToUint8Array(this.vapidPublicKey)
-        });
+        if (!('Notification' in window)) {
+          this.showToast('Push Notifications are not supported in this browser', 'error');
+          return;
+        }
+
+        if (Notification.permission !== 'granted') {
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') {
+            this.showToast('Please enable Notifications in iOS Settings', 'error');
+            return;
+          }
+        }
+
+        await this.subscribeUserToWebPush();
+
+        this.showToast('Sending Test Notification...', 'success');
+        const res = await fetch('/api/test-push', { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.sentCount > 0) {
+            this.showToast('✓ Test Push Sent! Check your iPhone lock screen.', 'success');
+          } else {
+            this.showToast('No active subscription found. Re-enabling...', 'error');
+            await this.subscribeUserToWebPush();
+          }
+        }
+      } catch (err) {
+        console.log('Failed to trigger test push:', err);
+        this.showToast('Failed to send test push: ' + err.message, 'error');
+      }
+    }
+
+    async subscribeUserToWebPush() {
+      if (!this.vapidPublicKey) await this.fetchVapidKey();
+      if (!this.vapidPublicKey) return;
+
+      try {
+        let swReg = this.swRegistration;
+        if (!swReg && ('serviceWorker' in navigator)) {
+          swReg = await navigator.serviceWorker.ready;
+        }
+        if (!swReg) return;
+
+        let sub = await swReg.pushManager.getSubscription();
+        if (!sub) {
+          sub = await swReg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: this.urlBase64ToUint8Array(this.vapidPublicKey)
+          });
+        }
 
         await fetch('/api/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(sub)
         });
+        console.log('Web Push subscription successfully registered with server!');
       } catch (err) {
         console.log('Failed to subscribe user to push:', err);
       }
@@ -402,6 +448,7 @@
       this.appleLockScreen = document.getElementById('apple-lock-screen');
       this.btnUnlockApp = document.getElementById('btn-unlock-app');
       this.btnManualLock = document.getElementById('btn-manual-lock');
+      this.btnTestNotification = document.getElementById('btn-test-notification');
       this.lockStatusText = document.getElementById('lock-status-text');
 
       // Views
@@ -462,6 +509,9 @@
     bindEvents() {
       this.btnUnlockApp.addEventListener('click', () => this.handleUnlockButtonClick());
       this.btnManualLock.addEventListener('click', () => this.lockApp());
+      if (this.btnTestNotification) {
+        this.btnTestNotification.addEventListener('click', () => this.triggerTestPushNotification());
+      }
 
       this.navItems.forEach(nav => {
         nav.addEventListener('click', () => {
@@ -654,7 +704,6 @@
         }
       };
 
-      // Instantly apply blur mask on background / app switch / focus loss
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') {
           lockPrivacyMask();
