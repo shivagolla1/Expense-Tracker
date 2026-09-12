@@ -119,11 +119,26 @@
         </div>
 
         <div class="apple-projects-list" id="dashboard-projects-grid">
-          <!-- Dynamically populated project cards (Name & Owner only) -->
+          <!-- Dynamically populated project cards -->
         </div>
       </section>
 
-      <!-- TAB 3: RECENT ACTIVITY FEED -->
+      <!-- TAB 3: POTENTIAL CLIENTS (LEADS) VIEW -->
+      <section id="view-leads" class="tab-view">
+        <div class="apple-page-header">
+          <div>
+            <h2>Potential Clients</h2>
+            <span class="page-subtitle">Inquiries & Scheduled Follow-ups</span>
+          </div>
+          <button class="apple-btn-primary" id="leads-add-btn">+ Add Lead</button>
+        </div>
+
+        <div class="apple-leads-list" id="leads-grid">
+          <!-- Dynamically populated potential client cards -->
+        </div>
+      </section>
+
+      <!-- TAB 4: RECENT ACTIVITY FEED -->
       <section id="view-activity" class="tab-view">
         <div class="apple-page-header">
           <h2>Activity</h2>
@@ -201,8 +216,8 @@
 
     </main>
 
-    <!-- APPLE BOTTOM NAVIGATOR BAR -->
-    <nav class="apple-bottom-nav">
+    <!-- APPLE 4-TAB BOTTOM NAVIGATOR BAR -->
+    <nav class="apple-bottom-nav four-tabs">
       <button class="nav-item active" data-tab="view-quick-entry">
         <div class="nav-icon">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -215,6 +230,13 @@
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
         </div>
         <span>Projects</span>
+      </button>
+
+      <button class="nav-item" data-tab="view-leads">
+        <div class="nav-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        </div>
+        <span>Leads</span>
       </button>
 
       <button class="nav-item" data-tab="view-activity">
@@ -396,6 +418,49 @@
 
           <button type="submit" class="apple-submit-btn">
             Create Project
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- NEW POTENTIAL CLIENT (LEAD) MODAL -->
+    <div class="bottom-sheet-overlay" id="sheet-lead-overlay">
+      <div class="bottom-sheet" id="sheet-lead">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <h3>Add Potential Client</h3>
+          <button class="close-sheet" data-close="sheet-lead-overlay">&times;</button>
+        </div>
+
+        <form id="form-lead" class="sheet-form">
+          <div class="form-group">
+            <label class="form-label" for="lead-name">Client Name</label>
+            <input type="text" id="lead-name" placeholder="e.g. Rajesh Kumar" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="lead-phone">Phone Number</label>
+            <input type="tel" id="lead-phone" placeholder="e.g. 9876543210" required>
+          </div>
+
+          <div class="form-group-row">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label" for="lead-date">Follow-up Date</label>
+              <input type="date" id="lead-date" required>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label" for="lead-time">Time</label>
+              <input type="time" id="lead-time" value="11:00" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="lead-notes">Notes / Inquiry Details (Optional)</label>
+            <input type="text" id="lead-notes" placeholder="e.g. 3BHK Villa Interiors, budget ~₹25L">
+          </div>
+
+          <button type="submit" class="apple-submit-btn">
+            Save Lead & Schedule Reminder
           </button>
         </form>
       </div>

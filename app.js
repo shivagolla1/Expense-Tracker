@@ -8,6 +8,7 @@
   const STORAGE_KEYS = {
     PROJECTS: 'aakruthee_projects_prod_v3',
     TRANSACTIONS: 'aakruthee_transactions_prod_v3',
+    LEADS: 'aakruthee_leads_prod_v1',
     PASSKEY_CRED_ID: 'aakruthee_passkey_cred_id_prod_v3',
     NOTIF_ONBOARDED: 'aakruthee_notif_onboarded_v1'
   };
@@ -16,6 +17,7 @@
     constructor() {
       this.projects = [];
       this.transactions = [];
+      this.leads = [];
       this.activeTab = 'view-quick-entry';
       this.activeProjectId = null;
       this.activityFilter = 'all';
@@ -105,7 +107,7 @@
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
           await this.subscribeUserToWebPush();
-          this.showToast('✓ Daily 9 AM & 9 PM Reminders Enabled!', 'success');
+          this.showToast('✓ Daily Reminders & Client Alerts Enabled!', 'success');
         } else {
           this.showToast('Notification permission denied in iOS Settings', 'error');
         }
@@ -172,7 +174,6 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(sub)
         });
-        console.log('Web Push subscription successfully registered with server!');
       } catch (err) {
         console.log('Failed to subscribe user to push:', err);
       }
@@ -190,7 +191,7 @@
     }
 
     clearLegacyDummyCache() {
-      ['aakruthee_projects_v10', 'aakruthee_transactions_v10', 'aakruthee_projects_v9', 'aakruthee_transactions_v9', 'aakruthee_projects_v8', 'aakruthee_transactions_v8', 'atelier_flow_projects_v4', 'atelier_flow_transactions_v4', 'aakruthee_projects_prod_v1', 'aakruthee_transactions_prod_v1', 'aakruthee_projects_prod_v2', 'aakruthee_transactions_prod_v2'].forEach(key => {
+      ['aakruthee_projects_v10', 'aakruthee_transactions_v10', 'aakruthee_projects_v9', 'aakruthee_transactions_v9'].forEach(key => {
         localStorage.removeItem(key);
       });
     }
@@ -265,6 +266,7 @@
           if (data.success) {
             this.projects = (data.projects || []).filter(p => !['proj-1', 'proj-2', 'proj-3'].includes(p.id));
             this.transactions = (data.transactions || []).filter(t => !['tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106'].includes(t.id) && !['proj-1', 'proj-2', 'proj-3'].includes(t.projectId));
+            this.leads = data.leads || [];
             this.saveLocalCache();
             this.render();
             return;
@@ -281,24 +283,79 @@
     loadLocalCache() {
       const storedProj = localStorage.getItem(STORAGE_KEYS.PROJECTS);
       const storedTx = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
+      const storedLeads = localStorage.getItem(STORAGE_KEYS.LEADS);
 
-      if (storedProj && storedTx) {
-        try {
-          this.projects = JSON.parse(storedProj) || [];
-          this.transactions = JSON.parse(storedTx) || [];
-        } catch (e) {
-          this.projects = [];
-          this.transactions = [];
-        }
-      } else {
+      try {
+        this.projects = storedProj ? (JSON.parse(storedProj) || []) : [];
+        this.transactions = storedTx ? (JSON.parse(storedTx) || []) : [];
+        this.leads = storedLeads ? (JSON.parse(storedLeads) || []) : [];
+      } catch (e) {
         this.projects = [];
         this.transactions = [];
+        this.leads = [];
       }
     }
 
     saveLocalCache() {
       localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(this.projects));
       localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(this.transactions));
+      localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify(this.leads));
+    }
+
+    async saveLeadToCloud(newLead) {
+      this.leads.push(newLead);
+      this.saveLocalCache();
+      this.render();
+      this.showToast(`Lead "${newLead.name}" added & reminder set!`, 'success');
+
+      try {
+        const response = await fetch('/api/leads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newLead)
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.leads) {
+            this.leads = data.leads;
+            this.saveLocalCache();
+            this.render();
+          }
+        }
+      } catch (err) {
+        console.log('Failed to post lead to Cloud API, saved locally:', err);
+      }
+    }
+
+    async deleteLeadFromCloud(leadId) {
+      const lead = this.leads.find(l => l.id === leadId);
+      if (!lead) return;
+      if (!confirm(`Delete lead "${lead.name}"?`)) return;
+
+      this.leads = this.leads.filter(l => l.id !== leadId);
+      this.saveLocalCache();
+      this.render();
+      this.showToast(`Deleted lead "${lead.name}"`, 'success');
+
+      try {
+        const response = await fetch(`/api/leads/${leadId}`, { method: 'DELETE' });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.leads) {
+            this.leads = data.leads;
+            this.saveLocalCache();
+            this.render();
+          }
+        }
+      } catch (err) {
+        console.log('Failed to delete lead from cloud, updated locally:', err);
+      }
+    }
+
+    async convertLeadToProject(lead) {
+      document.getElementById('proj-name').value = `${lead.name} Villa Project`;
+      document.getElementById('proj-client').value = lead.name;
+      this.openSheet(this.sheetProjectOverlay);
     }
 
     async saveTransactionToCloud(newTx) {
@@ -461,6 +518,9 @@
       this.dashboardProjectsGrid = document.getElementById('dashboard-projects-grid');
       this.btnDashboardAddProj = document.getElementById('dashboard-add-proj-btn');
 
+      this.leadsGrid = document.getElementById('leads-grid');
+      this.btnLeadsAdd = document.getElementById('leads-add-btn');
+
       this.activityFilterPills = document.getElementById('activity-filter-pills');
       this.activityTransactionList = document.getElementById('activity-transaction-list');
 
@@ -483,12 +543,14 @@
       this.sheetInflowOverlay = document.getElementById('sheet-inflow-overlay');
       this.sheetOutflowOverlay = document.getElementById('sheet-outflow-overlay');
       this.sheetProjectOverlay = document.getElementById('sheet-project-overlay');
+      this.sheetLeadOverlay = document.getElementById('sheet-lead-overlay');
       this.sheetTxActionOverlay = document.getElementById('sheet-tx-action-overlay');
       this.sheetNotifOnboardingOverlay = document.getElementById('sheet-notif-onboarding-overlay');
 
       this.formInflow = document.getElementById('form-inflow');
       this.formOutflow = document.getElementById('form-outflow');
       this.formProject = document.getElementById('form-project');
+      this.formLead = document.getElementById('form-lead');
 
       this.inflowProjectChips = document.getElementById('inflow-project-chips');
       this.outflowProjectChips = document.getElementById('outflow-project-chips');
@@ -540,6 +602,15 @@
         document.getElementById('proj-budget-subtext').textContent = '';
         this.openSheet(this.sheetProjectOverlay);
       });
+
+      if (this.btnLeadsAdd) {
+        this.btnLeadsAdd.addEventListener('click', () => {
+          const today = new Date().toISOString().split('T')[0];
+          document.getElementById('lead-date').value = today;
+          this.openSheet(this.sheetLeadOverlay);
+        });
+      }
+
       this.btnBackToDashboard.addEventListener('click', () => this.switchTab('view-dashboard'));
       this.btnDeleteProject.addEventListener('click', () => this.deleteProjectFromCloud(this.activeProjectId));
 
@@ -601,6 +672,9 @@
       this.formInflow.addEventListener('submit', (e) => this.handleInflowSubmit(e));
       this.formOutflow.addEventListener('submit', (e) => this.handleOutflowSubmit(e));
       this.formProject.addEventListener('submit', (e) => this.handleProjectSubmit(e));
+      if (this.formLead) {
+        this.formLead.addEventListener('submit', (e) => this.handleLeadSubmit(e));
+      }
 
       this.activityFilterPills.addEventListener('click', (e) => {
         const pill = e.target.closest('.segment');
@@ -611,80 +685,6 @@
           this.renderActivityFeed();
         }
       });
-    }
-
-    openTxActionSheet(tx) {
-      this.selectedTxForAction = tx;
-      const proj = this.projects.find(p => p.id === tx.projectId) || { name: 'General Project' };
-      const dateStr = new Date(tx.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-
-      let typeLabel = 'Expense';
-      if (tx.type === 'client_payment') typeLabel = 'Client Advance (Money In)';
-      if (tx.type === 'vendor_commission') typeLabel = 'Vendor Commission (Money In)';
-
-      this.txActionSummary.innerHTML = `
-        <div class="tx-action-row-item">
-          <span class="lbl">Amount</span>
-          <span class="val" style="font-size:16px; font-weight:700;">${this.formatCurrency(tx.amount)}</span>
-        </div>
-        <div class="tx-action-row-item">
-          <span class="lbl">Type / Category</span>
-          <span class="val">${this.escapeHTML(tx.category || typeLabel)}</span>
-        </div>
-        <div class="tx-action-row-item">
-          <span class="lbl">Project</span>
-          <span class="val">${this.escapeHTML(proj.name)}</span>
-        </div>
-        <div class="tx-action-row-item">
-          <span class="lbl">Payment Mode</span>
-          <span class="val">${tx.mode || 'UPI'}</span>
-        </div>
-        <div class="tx-action-row-item">
-          <span class="lbl">Note / Vendor</span>
-          <span class="val">${this.escapeHTML(tx.note || '—')}</span>
-        </div>
-        <div class="tx-action-row-item">
-          <span class="lbl">Date</span>
-          <span class="val">${dateStr}</span>
-        </div>
-      `;
-
-      this.openSheet(this.sheetTxActionOverlay);
-    }
-
-    startEditingTransaction(tx) {
-      this.editingTxId = tx.id;
-      const formattedAmt = this.formatIndianNumberString(String(tx.amount));
-
-      if (tx.type === 'expense') {
-        document.getElementById('outflow-amount').value = formattedAmt;
-        document.getElementById('outflow-amount-subtext').textContent = this.getIndianShortText(tx.amount);
-        document.getElementById('outflow-note').value = tx.note || '';
-        
-        const catRadio = document.querySelector(`input[name="outflow_cat"][value="${tx.category}"]`);
-        if (catRadio) catRadio.checked = true;
-
-        const modeRadio = document.querySelector(`input[name="outflow_mode"][value="${tx.mode}"]`);
-        if (modeRadio) modeRadio.checked = true;
-
-        this.outflowSheetTitle.textContent = 'Edit Money Out';
-        this.btnSubmitOutflow.textContent = 'Update Transaction';
-        this.openSheetWithProject(this.sheetOutflowOverlay, tx.projectId);
-      } else {
-        document.getElementById('inflow-amount').value = formattedAmt;
-        document.getElementById('inflow-amount-subtext').textContent = this.getIndianShortText(tx.amount);
-        document.getElementById('inflow-note').value = tx.note || '';
-
-        const typeRadio = document.querySelector(`input[name="inflow_type"][value="${tx.type}"]`);
-        if (typeRadio) typeRadio.checked = true;
-
-        const modeRadio = document.querySelector(`input[name="inflow_mode"][value="${tx.mode}"]`);
-        if (modeRadio) modeRadio.checked = true;
-
-        this.inflowSheetTitle.textContent = 'Edit Money In';
-        this.btnSubmitInflow.textContent = 'Update Transaction';
-        this.openSheetWithProject(this.sheetInflowOverlay, tx.projectId);
-      }
     }
 
     // IRONCLAD APP SWITCHER PRIVACY BLUR MASK
@@ -905,7 +905,7 @@
 
     openSheet(overlay) {
       overlay.classList.add('active');
-      const firstInput = overlay.querySelector('input[type="text"]');
+      const firstInput = overlay.querySelector('input[type="text"], input[type="tel"]');
       if (firstInput) setTimeout(() => firstInput.focus(), 300);
     }
 
@@ -951,6 +951,7 @@
     render() {
       this.renderProjectsDashboard();
       this.renderProjectChips();
+      this.renderLeadsGrid();
       this.renderActivityFeed();
 
       if (this.activeTab === 'view-project-detail' && this.activeProjectId) {
@@ -989,6 +990,90 @@
 
         this.dashboardProjectsGrid.appendChild(card);
       });
+    }
+
+    renderLeadsGrid() {
+      if (!this.leadsGrid) return;
+      this.leadsGrid.innerHTML = '';
+
+      if (!this.leads || this.leads.length === 0) {
+        this.leadsGrid.innerHTML = `
+          <div style="text-align:center; padding:40px 20px; color:var(--apple-text-secondary);">
+            <div style="font-size:32px; margin-bottom:8px;">👥</div>
+            <div style="font-size:16px; font-weight:600; color:var(--apple-text); margin-bottom:4px;">No Potential Clients Yet</div>
+            <div style="font-size:13px;">Tap "+ Add Lead" above to store inquiry numbers and set follow-up reminders!</div>
+          </div>
+        `;
+        return;
+      }
+
+      const sorted = [...this.leads].sort((a, b) => new Date(a.followupDate) - new Date(b.followupDate));
+
+      sorted.forEach(lead => {
+        const dateObj = new Date(lead.followupDate);
+        const dateStr = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+        const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+        const cleanPhone = lead.phone.replace(/[^0-9+]/g, '');
+
+        const card = document.createElement('div');
+        card.className = 'lead-card-apple';
+        card.innerHTML = `
+          <div class="lead-header-row">
+            <div>
+              <div class="lead-title-name">${this.escapeHTML(lead.name)}</div>
+              <div class="lead-phone-text">📱 ${this.escapeHTML(lead.phone)}</div>
+            </div>
+            <div class="lead-time-badge">⏰ ${dateStr}, ${timeStr}</div>
+          </div>
+
+          ${lead.notes ? `<div class="lead-notes-text">📝 ${this.escapeHTML(lead.notes)}</div>` : ''}
+
+          <div class="lead-actions-row">
+            <a href="tel:${cleanPhone}" class="lead-btn btn-lead-call">📞 Call</a>
+            <a href="https://wa.me/${cleanPhone.startsWith('+') ? cleanPhone.substring(1) : '91' + cleanPhone}" target="_blank" class="lead-btn btn-lead-wa">💬 WhatsApp</a>
+            <button class="lead-btn btn-lead-convert" data-id="${lead.id}">🏗️ Convert</button>
+            <button class="lead-btn" style="background:#f2f2f7; color:var(--apple-red);" data-delete="${lead.id}">🗑️</button>
+          </div>
+        `;
+
+        card.querySelector('[data-id]').addEventListener('click', () => {
+          this.convertLeadToProject(lead);
+        });
+
+        card.querySelector('[data-delete]').addEventListener('click', () => {
+          this.deleteLeadFromCloud(lead.id);
+        });
+
+        this.leadsGrid.appendChild(card);
+      });
+    }
+
+    async handleLeadSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('lead-name').value.trim();
+      const phone = document.getElementById('lead-phone').value.trim();
+      const dateVal = document.getElementById('lead-date').value;
+      const timeVal = document.getElementById('lead-time').value || '11:00';
+      const notes = document.getElementById('lead-notes').value.trim();
+
+      if (!name || !phone || !dateVal) return;
+
+      const followupISO = new Date(`${dateVal}T${timeVal}:00`).toISOString();
+
+      const newLead = {
+        id: 'lead-' + Date.now(),
+        name,
+        phone,
+        followupDate: followupISO,
+        notes,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      };
+
+      await this.saveLeadToCloud(newLead);
+      this.formLead.reset();
+      this.closeSheet(this.sheetLeadOverlay);
     }
 
     openFullProjectView(projectId) {

@@ -92,6 +92,20 @@ async function initPostgresSchema() {
       );
     `);
 
+    // Create potential_clients (leads) table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS potential_clients (
+        id VARCHAR(255) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        phone VARCHAR(50) NOT NULL,
+        followup_date TIMESTAMP WITH TIME ZONE NOT NULL,
+        notes TEXT,
+        status VARCHAR(50) DEFAULT 'pending',
+        notified BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // Purge dummy seed records if any exist
     await client.query(`
       DELETE FROM transactions WHERE id IN ('tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106') OR project_id IN ('proj-1', 'proj-2', 'proj-3');
@@ -107,7 +121,7 @@ async function initPostgresSchema() {
 // FILE FALLBACK HELPERS
 function readJsonDB() {
   if (!fs.existsSync(DB_FILE)) {
-    const emptyData = { projects: [], transactions: [], subscriptions: [] };
+    const emptyData = { projects: [], transactions: [], subscriptions: [], leads: [] };
     writeJsonDB(emptyData);
     return emptyData;
   }
@@ -115,9 +129,14 @@ function readJsonDB() {
     const json = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
     const cleanProjects = (json.projects || []).filter(p => !['proj-1', 'proj-2', 'proj-3'].includes(p.id));
     const cleanTransactions = (json.transactions || []).filter(t => !['tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106'].includes(t.id) && !['proj-1', 'proj-2', 'proj-3'].includes(t.projectId));
-    return { projects: cleanProjects, transactions: cleanTransactions, subscriptions: json.subscriptions || [] };
+    return {
+      projects: cleanProjects,
+      transactions: cleanTransactions,
+      subscriptions: json.subscriptions || [],
+      leads: json.leads || []
+    };
   } catch (e) {
-    return { projects: [], transactions: [], subscriptions: [] };
+    return { projects: [], transactions: [], subscriptions: [], leads: [] };
   }
 }
 
@@ -149,7 +168,7 @@ app.post('/api/subscribe', async (req, res) => {
         'INSERT INTO push_subscriptions (endpoint, keys) VALUES ($1, $2) ON CONFLICT (endpoint) DO UPDATE SET keys = $2',
         [sub.endpoint, JSON.stringify(sub.keys)]
       );
-      console.log('Successfully saved push subscription to PostgreSQL:', sub.endpoint.substring(0, 40) + '...');
+      console.log('Successfully saved push subscription to PostgreSQL.');
       return res.json({ success: true, message: 'Push subscription saved to PostgreSQL.' });
     } catch (err) {
       console.error('Error saving push sub to PostgreSQL:', err);
@@ -162,7 +181,6 @@ app.post('/api/subscribe', async (req, res) => {
     jsonDB.subscriptions.push(sub);
     writeJsonDB(jsonDB);
   }
-  console.log('Successfully saved push subscription to JSON DB:', sub.endpoint.substring(0, 40) + '...');
   res.json({ success: true, message: 'Push subscription saved.' });
 });
 
@@ -181,27 +199,77 @@ app.post('/api/test-push', async (req, res) => {
   });
 });
 
-// 1. GET ALL CLOUD DATA
+// 1. GET ALL CLOUD DATA (Projects, Transactions & Leads)
 app.get('/api/data', async (req, res) => {
   if (usePostgres && pool) {
     try {
       const projRes = await pool.query('SELECT id, name, client, budget, created_at as "createdAt" FROM projects ORDER BY created_at ASC');
       const txRes = await pool.query('SELECT id, project_id as "projectId", type, amount, category, mode, note, date FROM transactions ORDER BY date DESC');
-      
+      const leadsRes = await pool.query('SELECT id, name, phone, followup_date as "followupDate", notes, status, notified, created_at as "createdAt" FROM potential_clients ORDER BY followup_date ASC');
+
       const projects = projRes.rows.map(r => ({ ...r, budget: Number(r.budget) }));
       const transactions = txRes.rows.map(r => ({ ...r, amount: Number(r.amount) }));
+      const leads = leadsRes.rows;
 
-      return res.json({ success: true, dbType: 'PostgreSQL', projects, transactions });
+      return res.json({ success: true, dbType: 'PostgreSQL', projects, transactions, leads });
     } catch (err) {
       console.error('PostgreSQL query error, using JSON fallback:', err);
     }
   }
 
   const jsonDB = readJsonDB();
-  res.json({ success: true, dbType: 'JSON_File', projects: jsonDB.projects, transactions: jsonDB.transactions });
+  res.json({ success: true, dbType: 'JSON_File', projects: jsonDB.projects, transactions: jsonDB.transactions, leads: jsonDB.leads });
 });
 
-// 2. POST NEW TRANSACTION
+// 2. POTENTIAL CLIENTS (LEADS) ENDPOINTS
+app.post('/api/leads', async (req, res) => {
+  const newLead = req.body;
+  if (!newLead || !newLead.name || !newLead.phone || !newLead.followupDate) {
+    return res.status(400).json({ success: false, error: 'Invalid lead payload' });
+  }
+
+  if (usePostgres && pool) {
+    try {
+      await pool.query(
+        'INSERT INTO potential_clients (id, name, phone, followup_date, notes, status, notified) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+        [newLead.id, newLead.name, newLead.phone, newLead.followupDate, newLead.notes || '', newLead.status || 'pending', false]
+      );
+      
+      const leadsRes = await pool.query('SELECT id, name, phone, followup_date as "followupDate", notes, status, notified, created_at as "createdAt" FROM potential_clients ORDER BY followup_date ASC');
+      return res.json({ success: true, dbType: 'PostgreSQL', lead: newLead, leads: leadsRes.rows });
+    } catch (err) {
+      console.error('PostgreSQL lead insert error:', err);
+    }
+  }
+
+  const jsonDB = readJsonDB();
+  jsonDB.leads = jsonDB.leads || [];
+  jsonDB.leads.push(newLead);
+  writeJsonDB(jsonDB);
+  res.json({ success: true, dbType: 'JSON_File', lead: newLead, leads: jsonDB.leads });
+});
+
+app.delete('/api/leads/:id', async (req, res) => {
+  const leadId = req.params.id;
+  if (!leadId) return res.status(400).json({ success: false, error: 'Lead ID required' });
+
+  if (usePostgres && pool) {
+    try {
+      await pool.query('DELETE FROM potential_clients WHERE id = $1', [leadId]);
+      const leadsRes = await pool.query('SELECT id, name, phone, followup_date as "followupDate", notes, status, notified, created_at as "createdAt" FROM potential_clients ORDER BY followup_date ASC');
+      return res.json({ success: true, dbType: 'PostgreSQL', leads: leadsRes.rows });
+    } catch (err) {
+      console.error('Error deleting lead from PostgreSQL:', err);
+    }
+  }
+
+  const jsonDB = readJsonDB();
+  jsonDB.leads = (jsonDB.leads || []).filter(l => l.id !== leadId);
+  writeJsonDB(jsonDB);
+  res.json({ success: true, dbType: 'JSON_File', leads: jsonDB.leads });
+});
+
+// 3. POST NEW TRANSACTION
 app.post('/api/transactions', async (req, res) => {
   const newTx = req.body;
   if (!newTx || !newTx.amount || !newTx.projectId) {
@@ -230,7 +298,7 @@ app.post('/api/transactions', async (req, res) => {
   res.json({ success: true, dbType: 'JSON_File', transaction: newTx, transactions: jsonDB.transactions });
 });
 
-// 3. PUT UPDATE TRANSACTION
+// 4. PUT UPDATE TRANSACTION
 app.put('/api/transactions/:id', async (req, res) => {
   const txId = req.params.id;
   const updatedTx = req.body;
@@ -264,7 +332,7 @@ app.put('/api/transactions/:id', async (req, res) => {
   res.json({ success: true, dbType: 'JSON_File', transactions: jsonDB.transactions });
 });
 
-// 4. DELETE TRANSACTION
+// 5. DELETE TRANSACTION
 app.delete('/api/transactions/:id', async (req, res) => {
   const txId = req.params.id;
   if (!txId) return res.status(400).json({ success: false, error: 'Transaction ID required' });
@@ -287,7 +355,7 @@ app.delete('/api/transactions/:id', async (req, res) => {
   res.json({ success: true, dbType: 'JSON_File', transactions: jsonDB.transactions });
 });
 
-// 5. POST NEW PROJECT
+// 6. POST NEW PROJECT
 app.post('/api/projects', async (req, res) => {
   const newProj = req.body;
   if (!newProj || !newProj.name || !newProj.client) {
@@ -316,7 +384,7 @@ app.post('/api/projects', async (req, res) => {
   res.json({ success: true, dbType: 'JSON_File', project: newProj, projects: jsonDB.projects });
 });
 
-// 6. DELETE PROJECT
+// 7. DELETE PROJECT
 app.delete('/api/projects/:id', async (req, res) => {
   const projId = req.params.id;
   if (!projId) return res.status(400).json({ success: false, error: 'Project ID required' });
@@ -345,7 +413,7 @@ app.delete('/api/projects/:id', async (req, res) => {
   res.json({ success: true, projects: jsonDB.projects, transactions: jsonDB.transactions });
 });
 
-// DAILY 9:00 AM & 9:00 PM IST PUSH SCHEDULER
+// BACKGROUND SCHEDULER: DAILY 9 AM / 9 PM & SCHEDULED LEAD FOLLOW-UP PUSH NOTIFICATIONS
 let lastTriggeredHour = -1;
 
 setInterval(async () => {
@@ -355,6 +423,7 @@ setInterval(async () => {
   const hourIST = istDate.getUTCHours();
   const minuteIST = istDate.getUTCMinutes();
 
+  // 1. Daily 9:00 AM & 9:00 PM Reminders
   if ((hourIST === 9 || hourIST === 21) && minuteIST === 0 && lastTriggeredHour !== hourIST) {
     lastTriggeredHour = hourIST;
     const title = hourIST === 9 ? 'Aakruthee • Good Morning 🌅' : 'Aakruthee • Evening Reminder 🌙';
@@ -367,7 +436,52 @@ setInterval(async () => {
   } else if (minuteIST !== 0) {
     lastTriggeredHour = -1;
   }
+
+  // 2. Scheduled Lead Follow-up Check (minute-accurate check)
+  await checkAndSendLeadFollowupReminders(now);
+
 }, 30000);
+
+async function checkAndSendLeadFollowupReminders(nowDate) {
+  let pendingLeads = [];
+
+  if (usePostgres && pool) {
+    try {
+      const res = await pool.query(
+        'SELECT id, name, phone, followup_date as "followupDate", notes FROM potential_clients WHERE followup_date <= $1 AND (notified IS FALSE OR notified IS NULL)',
+        [nowDate.toISOString()]
+      );
+      pendingLeads = res.rows;
+    } catch (err) {
+      console.error('Error querying due leads from PostgreSQL:', err);
+    }
+  } else {
+    const jsonDB = readJsonDB();
+    pendingLeads = (jsonDB.leads || []).filter(l => new Date(l.followupDate) <= nowDate && !l.notified);
+  }
+
+  for (const lead of pendingLeads) {
+    const title = `Client Follow-up Reminder 📞`;
+    const body = `Time to call ${lead.name} (${lead.phone})${lead.notes ? ' • ' + lead.notes : ''}`;
+    console.log(`Sending Lead Follow-up Push Notification for ${lead.name}...`);
+    
+    await sendPushNotificationToAll(title, body);
+
+    // Mark lead as notified
+    if (usePostgres && pool) {
+      try {
+        await pool.query('UPDATE potential_clients SET notified = TRUE WHERE id = $1', [lead.id]);
+      } catch (e) {}
+    } else {
+      const jsonDB = readJsonDB();
+      const idx = jsonDB.leads.findIndex(l => l.id === lead.id);
+      if (idx !== -1) {
+        jsonDB.leads[idx].notified = true;
+        writeJsonDB(jsonDB);
+      }
+    }
+  }
+}
 
 async function sendPushNotificationToAll(title, body) {
   let subscriptions = [];
@@ -390,14 +504,9 @@ async function sendPushNotificationToAll(title, body) {
     try {
       await webpush.sendNotification(sub, payload);
       sentCount++;
-      console.log('Successfully sent Web Push to endpoint:', sub.endpoint.substring(0, 40) + '...');
     } catch (err) {
       failedCount++;
-      console.error('Failed to send Web Push (status code:', err.statusCode, '):', err.message);
-
-      // Clean up stale or expired subscriptions (404, 410 Gone)
       if (err.statusCode === 404 || err.statusCode === 410) {
-        console.log('Removing expired subscription:', sub.endpoint.substring(0, 40) + '...');
         if (usePostgres && pool) {
           try {
             await pool.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [sub.endpoint]);
