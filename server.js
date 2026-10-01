@@ -310,8 +310,8 @@ app.put('/api/transactions/:id', async (req, res) => {
   if (usePostgres && pool) {
     try {
       await pool.query(
-        'UPDATE transactions SET type = $1, amount = $2, category = $3, mode = $4, note = $5 WHERE id = $6',
-        [updatedTx.type, updatedTx.amount, updatedTx.category, updatedTx.mode, updatedTx.note, txId]
+        'UPDATE transactions SET project_id = $1, type = $2, amount = $3, category = $4, mode = $5, note = $6 WHERE id = $7',
+        [updatedTx.projectId, updatedTx.type, updatedTx.amount, updatedTx.category, updatedTx.mode, updatedTx.note, txId]
       );
 
       const txRes = await pool.query('SELECT id, project_id as "projectId", type, amount, category, mode, note, date FROM transactions ORDER BY date DESC');

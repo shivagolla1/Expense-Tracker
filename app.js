@@ -360,6 +360,81 @@
       this.openSheet(this.sheetProjectOverlay);
     }
 
+    // OPEN iOS TRANSACTION ACTION SHEET (EDIT / DELETE / RECEIPT)
+    openTxActionSheet(tx) {
+      this.selectedTxForAction = tx;
+      const proj = this.projects.find(p => p.id === tx.projectId) || { name: 'General Project', client: 'Client' };
+      const dateStr = new Date(tx.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+      let typeLabel = 'Expense';
+      if (tx.type === 'client_payment') typeLabel = 'Client Advance (Money In)';
+      if (tx.type === 'vendor_commission') typeLabel = 'Vendor Commission (Money In)';
+
+      this.txActionSummary.innerHTML = `
+        <div class="tx-action-row-item">
+          <span class="lbl">Amount</span>
+          <span class="val" style="font-size:16px; font-weight:700;">${this.formatCurrency(tx.amount)}</span>
+        </div>
+        <div class="tx-action-row-item">
+          <span class="lbl">Type / Category</span>
+          <span class="val">${this.escapeHTML(tx.category || typeLabel)}</span>
+        </div>
+        <div class="tx-action-row-item">
+          <span class="lbl">Project</span>
+          <span class="val">${this.escapeHTML(proj.name)}</span>
+        </div>
+        <div class="tx-action-row-item">
+          <span class="lbl">Payment Mode</span>
+          <span class="val">${tx.mode || 'UPI'}</span>
+        </div>
+        <div class="tx-action-row-item">
+          <span class="lbl">Note / Vendor</span>
+          <span class="val">${this.escapeHTML(tx.note || '—')}</span>
+        </div>
+        <div class="tx-action-row-item">
+          <span class="lbl">Date</span>
+          <span class="val">${dateStr}</span>
+        </div>
+      `;
+
+      this.openSheet(this.sheetTxActionOverlay);
+    }
+
+    startEditingTransaction(tx) {
+      this.editingTxId = tx.id;
+      const formattedAmt = this.formatIndianNumberString(String(tx.amount));
+
+      if (tx.type === 'expense') {
+        document.getElementById('outflow-amount').value = formattedAmt;
+        document.getElementById('outflow-amount-subtext').textContent = this.getIndianShortText(tx.amount);
+        document.getElementById('outflow-note').value = tx.note || '';
+        
+        const catRadio = document.querySelector(`input[name="outflow_cat"][value="${tx.category}"]`);
+        if (catRadio) catRadio.checked = true;
+
+        const modeRadio = document.querySelector(`input[name="outflow_mode"][value="${tx.mode}"]`);
+        if (modeRadio) modeRadio.checked = true;
+
+        this.outflowSheetTitle.textContent = 'Edit Money Out';
+        this.btnSubmitOutflow.textContent = 'Update Transaction';
+        this.openSheetWithProject(this.sheetOutflowOverlay, tx.projectId);
+      } else {
+        document.getElementById('inflow-amount').value = formattedAmt;
+        document.getElementById('inflow-amount-subtext').textContent = this.getIndianShortText(tx.amount);
+        document.getElementById('inflow-note').value = tx.note || '';
+
+        const typeRadio = document.querySelector(`input[name="inflow_type"][value="${tx.type}"]`);
+        if (typeRadio) typeRadio.checked = true;
+
+        const modeRadio = document.querySelector(`input[name="inflow_mode"][value="${tx.mode}"]`);
+        if (modeRadio) modeRadio.checked = true;
+
+        this.inflowSheetTitle.textContent = 'Edit Money In';
+        this.btnSubmitInflow.textContent = 'Update Transaction';
+        this.openSheetWithProject(this.sheetInflowOverlay, tx.projectId);
+      }
+    }
+
     async saveTransactionToCloud(newTx) {
       if (this.editingTxId) {
         const idx = this.transactions.findIndex(t => t.id === this.editingTxId);
@@ -930,7 +1005,15 @@
     }
 
     closeSheet(overlay) {
+      if (!overlay) return;
       overlay.classList.remove('active');
+      if (overlay.id === 'sheet-inflow-overlay' || overlay.id === 'sheet-outflow-overlay') {
+        this.editingTxId = null;
+        if (this.inflowSheetTitle) this.inflowSheetTitle.textContent = 'Record Money In';
+        if (this.btnSubmitInflow) this.btnSubmitInflow.textContent = 'Save Money In';
+        if (this.outflowSheetTitle) this.outflowSheetTitle.textContent = 'Record Money Out';
+        if (this.btnSubmitOutflow) this.btnSubmitOutflow.textContent = 'Save Money Out';
+      }
     }
 
     formatCurrency(amount) {
@@ -1026,6 +1109,7 @@
         const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
         const cleanPhone = lead.phone.replace(/[^0-9+]/g, '');
+        const waMsg = encodeURIComponent(`Hi ${lead.name},\n\nHope you are doing well! This is Shiva from Aakruthee Interior Studio regarding your inquiry.\n\nWould love to connect for a quick call today! 🏡`);
 
         const card = document.createElement('div');
         card.className = 'lead-card-apple';
@@ -1042,7 +1126,7 @@
 
           <div class="lead-actions-row">
             <a href="tel:${cleanPhone}" class="lead-btn btn-lead-call">📞 Call</a>
-            <a href="https://wa.me/${cleanPhone.startsWith('+') ? cleanPhone.substring(1) : '91' + cleanPhone}" target="_blank" class="lead-btn btn-lead-wa">💬 WhatsApp</a>
+            <a href="https://wa.me/${cleanPhone.startsWith('+') ? cleanPhone.substring(1) : '91' + cleanPhone}?text=${waMsg}" target="_blank" class="lead-btn btn-lead-wa">💬 WhatsApp</a>
             <button class="lead-btn btn-lead-convert" data-id="${lead.id}">🏗️ Convert</button>
             <button class="lead-btn" style="background:#f2f2f7; color:var(--apple-red);" data-delete="${lead.id}">🗑️</button>
           </div>
@@ -1222,11 +1306,15 @@
         </div>
         <div class="tx-right">
           <div class="tx-amount ${amountClass}">${sign}${this.formatCurrency(tx.amount)}</div>
-          <div class="tx-mode">${tx.mode || 'UPI'}</div>
+          <div class="tx-mode" style="display:flex; align-items:center; gap:4px; margin-top:2px;">
+            <span>${tx.mode || 'UPI'}</span>
+            <span style="color:var(--apple-blue); font-weight:600; font-size:10px; background:rgba(0,113,227,0.08); padding:1px 6px; border-radius:4px;">Edit ✏️</span>
+          </div>
         </div>
       `;
 
-      item.addEventListener('click', () => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
         this.openTxActionSheet(tx);
       });
 
@@ -1265,6 +1353,17 @@
       this.formInflow.reset();
       document.getElementById('inflow-amount-subtext').textContent = '';
       this.closeSheet(this.sheetInflowOverlay);
+
+      // Offer WhatsApp Receipt
+      const proj = this.projects.find(p => p.id === projectId) || { name: 'Project', client: 'Client' };
+      const stats = this.getProjectStats(projectId);
+      const receiptMsg = encodeURIComponent(`Payment Receipt 🧾\n\nDear ${proj.client},\n\nThank you for your payment!\n• Amount Received: ${this.formatCurrency(amountVal)}\n• Mode: ${mode}\n• Project: ${proj.name}\n\nCurrent Fund Balance: ${this.formatCurrency(stats.balanceLeft)}\n\nThank you!\nAakruthee Interior Studio 🏡`);
+      
+      setTimeout(() => {
+        if (confirm(`Transaction saved! Would you like to send a Payment Receipt to ${proj.client} on WhatsApp?`)) {
+          window.open(`https://wa.me/?text=${receiptMsg}`, '_blank');
+        }
+      }, 400);
     }
 
     async handleOutflowSubmit(e) {
@@ -1322,6 +1421,16 @@
       this.formProject.reset();
       document.getElementById('proj-budget-subtext').textContent = '';
       this.closeSheet(this.sheetProjectOverlay);
+
+      // Offer Welcome WhatsApp
+      const budgetStr = budgetVal > 0 ? ` (Est. Budget: ${this.formatCurrency(budgetVal)})` : '';
+      const welcomeMsg = encodeURIComponent(`Hello ${client}! 👋\n\nWelcome to Aakruthee Interior Studio! We are thrilled to start working on your ${name}${budgetStr}.\n\nWe will keep you updated on all site milestones and fund progress. Thank you for choosing us! 🏡✨\n\nWarm regards,\nAakruthee Interior Studio`);
+
+      setTimeout(() => {
+        if (confirm(`Project "${name}" created! Would you like to send a Welcome Message to ${client} on WhatsApp?`)) {
+          window.open(`https://wa.me/?text=${welcomeMsg}`, '_blank');
+        }
+      }, 400);
     }
 
     escapeHTML(str) {
