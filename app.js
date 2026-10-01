@@ -669,6 +669,7 @@
 
       this.heroBtnInflow.addEventListener('click', () => {
         this.editingTxId = null;
+        this.formInflow.reset();
         this.inflowSheetTitle.textContent = 'Record Money In';
         this.btnSubmitInflow.textContent = 'Save Money In';
         document.getElementById('inflow-amount-subtext').textContent = '';
@@ -677,6 +678,7 @@
 
       this.heroBtnOutflow.addEventListener('click', () => {
         this.editingTxId = null;
+        this.formOutflow.reset();
         this.outflowSheetTitle.textContent = 'Record Money Out';
         this.btnSubmitOutflow.textContent = 'Save Money Out';
         document.getElementById('outflow-amount-subtext').textContent = '';
@@ -702,6 +704,7 @@
 
       this.fullProjBtnInflow.addEventListener('click', () => {
         this.editingTxId = null;
+        this.formInflow.reset();
         this.inflowSheetTitle.textContent = 'Record Money In';
         this.btnSubmitInflow.textContent = 'Save Money In';
         document.getElementById('inflow-amount-subtext').textContent = '';
@@ -710,6 +713,7 @@
 
       this.fullProjBtnOutflow.addEventListener('click', () => {
         this.editingTxId = null;
+        this.formOutflow.reset();
         this.outflowSheetTitle.textContent = 'Record Money Out';
         this.btnSubmitOutflow.textContent = 'Save Money Out';
         document.getElementById('outflow-amount-subtext').textContent = '';
@@ -1007,12 +1011,21 @@
     closeSheet(overlay) {
       if (!overlay) return;
       overlay.classList.remove('active');
-      if (overlay.id === 'sheet-inflow-overlay' || overlay.id === 'sheet-outflow-overlay') {
+      if (overlay.id === 'sheet-inflow-overlay') {
         this.editingTxId = null;
+        if (this.formInflow) this.formInflow.reset();
         if (this.inflowSheetTitle) this.inflowSheetTitle.textContent = 'Record Money In';
         if (this.btnSubmitInflow) this.btnSubmitInflow.textContent = 'Save Money In';
+        const sub = document.getElementById('inflow-amount-subtext');
+        if (sub) sub.textContent = '';
+      }
+      if (overlay.id === 'sheet-outflow-overlay') {
+        this.editingTxId = null;
+        if (this.formOutflow) this.formOutflow.reset();
         if (this.outflowSheetTitle) this.outflowSheetTitle.textContent = 'Record Money Out';
         if (this.btnSubmitOutflow) this.btnSubmitOutflow.textContent = 'Save Money Out';
+        const sub = document.getElementById('outflow-amount-subtext');
+        if (sub) sub.textContent = '';
       }
     }
 
