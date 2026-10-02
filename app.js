@@ -127,7 +127,7 @@
           toast.classList.remove('active');
           setTimeout(() => toast.remove(), 350);
         }
-      }, 6000);
+      }, 3000);
     }
 
     getWhatsAppStatement(projectId) {
@@ -1404,10 +1404,7 @@
         </div>
         <div class="tx-right">
           <div class="tx-amount ${amountClass}">${sign}${this.formatCurrency(tx.amount)}</div>
-          <div class="tx-mode" style="display:flex; align-items:center; gap:4px; margin-top:2px;">
-            <span>${tx.mode || 'UPI'}</span>
-            <span style="color:var(--apple-blue); font-weight:600; font-size:10px; background:rgba(0,113,227,0.08); padding:1px 6px; border-radius:4px;">Edit ✏️</span>
-          </div>
+          <div class="tx-mode">${tx.mode || 'UPI'}</div>
         </div>
       `;
 
