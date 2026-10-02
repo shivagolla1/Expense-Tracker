@@ -81,9 +81,74 @@
       setTimeout(() => toast.classList.add('active'), 50);
 
       setTimeout(() => {
-        toast.classList.remove('active');
-        setTimeout(() => toast.remove(), 350);
+        if (toast.parentNode) {
+          toast.classList.remove('active');
+          setTimeout(() => toast.remove(), 350);
+        }
       }, 2800);
+    }
+
+    showToastWithAction(message, actionLabel, onActionClick, type = 'success') {
+      if (!this.toastContainer) return;
+      const toast = document.createElement('div');
+      toast.className = `apple-toast ${type}`;
+      toast.style.display = 'flex';
+      toast.style.alignItems = 'center';
+      toast.style.justifyContent = 'space-between';
+      toast.style.gap = '12px';
+      toast.style.maxWidth = '92%';
+
+      const icon = type === 'success' ? '✓' : 'ℹ';
+      toast.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="toast-icon">${icon}</span>
+          <span>${this.escapeHTML(message)}</span>
+        </div>
+        <button class="toast-action-btn" style="background:#0071e3; color:#ffffff; border:none; padding:6px 12px; border-radius:14px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; flex-shrink:0;">
+          ${this.escapeHTML(actionLabel)}
+        </button>
+      `;
+
+      const actionBtn = toast.querySelector('.toast-action-btn');
+      if (actionBtn && onActionClick) {
+        actionBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          onActionClick();
+          toast.classList.remove('active');
+          setTimeout(() => toast.remove(), 300);
+        });
+      }
+
+      this.toastContainer.appendChild(toast);
+      setTimeout(() => toast.classList.add('active'), 50);
+
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.classList.remove('active');
+          setTimeout(() => toast.remove(), 350);
+        }
+      }, 6000);
+    }
+
+    getWhatsAppStatement(projectId) {
+      const proj = this.projects.find(p => p.id === projectId) || { name: 'Project', client: 'Client' };
+      
+      const advances = this.transactions
+        .filter(t => t.projectId === projectId && (t.type === 'client_payment' || t.type === 'vendor_commission'))
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      let totalReceived = 0;
+      const listLines = advances.map(t => {
+        const amt = Number(t.amount) || 0;
+        totalReceived += amt;
+        return this.formatIndianNumberString(String(amt));
+      });
+
+      const totalFormatted = this.formatIndianNumberString(String(totalReceived));
+
+      const statementText = `Payment Statement 🧾\n\nProject: ${proj.name}\nClient: ${proj.client}\n\n${listLines.join('\n')}\nTotal received: ${totalFormatted}\n\nThank you!\nAakruthee Interior Studio 🏡`;
+
+      return encodeURIComponent(statementText);
     }
 
     checkFirstTimeNotificationOnboarding() {
@@ -648,6 +713,8 @@
       this.txActionSummary = document.getElementById('tx-action-summary');
       this.btnEditTxAction = document.getElementById('btn-edit-tx-action');
       this.btnDeleteTxAction = document.getElementById('btn-delete-tx-action');
+      this.btnWaStatementAction = document.getElementById('btn-wa-statement-action');
+      this.fullProjBtnWa = document.getElementById('full-proj-btn-wa');
 
       this.btnEnableNotifications = document.getElementById('btn-enable-notifications');
       this.btnSkipNotifications = document.getElementById('btn-skip-notifications');
@@ -720,6 +787,15 @@
         this.openSheetWithProject(this.sheetOutflowOverlay, this.activeProjectId);
       });
 
+      if (this.fullProjBtnWa) {
+        this.fullProjBtnWa.addEventListener('click', () => {
+          if (this.activeProjectId) {
+            const waUrl = `https://wa.me/?text=${this.getWhatsAppStatement(this.activeProjectId)}`;
+            window.open(waUrl, '_blank');
+          }
+        });
+      }
+
       // Action Sheet Events
       this.btnEditTxAction.addEventListener('click', () => {
         if (this.selectedTxForAction) {
@@ -729,13 +805,22 @@
         }
       });
 
+      if (this.btnWaStatementAction) {
+        this.btnWaStatementAction.addEventListener('click', () => {
+          if (this.selectedTxForAction) {
+            const tx = this.selectedTxForAction;
+            this.closeSheet(this.sheetTxActionOverlay);
+            const waUrl = `https://wa.me/?text=${this.getWhatsAppStatement(tx.projectId)}`;
+            window.open(waUrl, '_blank');
+          }
+        });
+      }
+
       this.btnDeleteTxAction.addEventListener('click', () => {
         if (this.selectedTxForAction) {
           const tx = this.selectedTxForAction;
-          if (confirm(`Delete transaction "${tx.note || tx.category || 'Entry'}" of ${this.formatCurrency(tx.amount)}?`)) {
-            this.closeSheet(this.sheetTxActionOverlay);
-            this.deleteTransactionFromCloud(tx.id);
-          }
+          this.closeSheet(this.sheetTxActionOverlay);
+          this.deleteTransactionFromCloud(tx.id);
         }
       });
 
@@ -807,7 +892,7 @@
         }
       });
 
-      ['pagehide', 'blur', 'freeze'].forEach(evt => {
+      ['pagehide', 'freeze'].forEach(evt => {
         window.addEventListener(evt, lockPrivacyMask);
       });
     }
@@ -1367,16 +1452,16 @@
       document.getElementById('inflow-amount-subtext').textContent = '';
       this.closeSheet(this.sheetInflowOverlay);
 
-      // Offer WhatsApp Receipt
-      const proj = this.projects.find(p => p.id === projectId) || { name: 'Project', client: 'Client' };
-      const stats = this.getProjectStats(projectId);
-      const receiptMsg = encodeURIComponent(`Payment Receipt 🧾\n\nDear ${proj.client},\n\nThank you for your payment!\n• Amount Received: ${this.formatCurrency(amountVal)}\n• Mode: ${mode}\n• Project: ${proj.name}\n\nCurrent Fund Balance: ${this.formatCurrency(stats.balanceLeft)}\n\nThank you!\nAakruthee Interior Studio 🏡`);
-      
-      setTimeout(() => {
-        if (confirm(`Transaction saved! Would you like to send a Payment Receipt to ${proj.client} on WhatsApp?`)) {
-          window.open(`https://wa.me/?text=${receiptMsg}`, '_blank');
-        }
-      }, 400);
+      // Offer WhatsApp Receipt via Non-blocking Toast Action
+      const statementEncoded = this.getWhatsAppStatement(projectId);
+      const waUrl = `https://wa.me/?text=${statementEncoded}`;
+
+      this.showToastWithAction(
+        `Saved Money In: ₹${this.formatIndianNumberString(String(amountVal))}`,
+        '💬 WhatsApp Statement',
+        () => window.open(waUrl, '_blank'),
+        'success'
+      );
     }
 
     async handleOutflowSubmit(e) {
@@ -1435,15 +1520,16 @@
       document.getElementById('proj-budget-subtext').textContent = '';
       this.closeSheet(this.sheetProjectOverlay);
 
-      // Offer Welcome WhatsApp
+      // Offer Welcome WhatsApp via Non-blocking Toast Action
       const budgetStr = budgetVal > 0 ? ` (Est. Budget: ${this.formatCurrency(budgetVal)})` : '';
       const welcomeMsg = encodeURIComponent(`Hello ${client}! 👋\n\nWelcome to Aakruthee Interior Studio! We are thrilled to start working on your ${name}${budgetStr}.\n\nWe will keep you updated on all site milestones and fund progress. Thank you for choosing us! 🏡✨\n\nWarm regards,\nAakruthee Interior Studio`);
 
-      setTimeout(() => {
-        if (confirm(`Project "${name}" created! Would you like to send a Welcome Message to ${client} on WhatsApp?`)) {
-          window.open(`https://wa.me/?text=${welcomeMsg}`, '_blank');
-        }
-      }, 400);
+      this.showToastWithAction(
+        `Created Project "${name}"`,
+        '💬 Send Welcome',
+        () => window.open(`https://wa.me/?text=${welcomeMsg}`, '_blank'),
+        'success'
+      );
     }
 
     escapeHTML(str) {
