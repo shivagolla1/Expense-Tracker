@@ -38,6 +38,7 @@
       this.checkOfflineStatus();
       this.initAppLifecycleSecurity();
       this.initStrictLock();
+      this.initIOSSwipeToBack();
       await this.registerServiceWorker();
 
       this.clearLegacyDummyCache();
@@ -860,6 +861,83 @@
           this.renderActivityFeed();
         }
       });
+
+      window.addEventListener('popstate', () => {
+        if (this.activeTab === 'view-project-detail') {
+          this.switchTab('view-dashboard');
+        }
+      });
+    }
+
+    initIOSSwipeToBack() {
+      const detailView = document.getElementById('view-project-detail');
+      if (!detailView) return;
+
+      let startX = 0;
+      let startY = 0;
+      let currentX = 0;
+      let isSwiping = false;
+
+      detailView.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1) return;
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+
+        // Trigger when touch starts near left edge (within 45px of screen edge)
+        if (startX < 45) {
+          isSwiping = true;
+          detailView.style.transition = 'none';
+        }
+      }, { passive: true });
+
+      detailView.addEventListener('touchmove', (e) => {
+        if (!isSwiping || e.touches.length !== 1) return;
+        const touch = e.touches[0];
+        const diffX = touch.clientX - startX;
+        const diffY = Math.abs(touch.clientY - startY);
+
+        // Cancel if scrolling vertically
+        if (diffY > diffX && currentX === 0) {
+          isSwiping = false;
+          return;
+        }
+
+        if (diffX > 0) {
+          currentX = diffX;
+          detailView.style.transform = `translateX(${diffX}px)`;
+          detailView.style.boxShadow = '-10px 0 30px rgba(0,0,0,0.15)';
+        }
+      }, { passive: true });
+
+      const endSwipe = () => {
+        if (!isSwiping) return;
+        isSwiping = false;
+        detailView.style.transition = 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.25s ease';
+
+        const threshold = window.innerWidth * 0.28;
+        if (currentX > threshold) {
+          detailView.style.transform = `translateX(${window.innerWidth}px)`;
+          setTimeout(() => {
+            detailView.style.transform = '';
+            detailView.style.transition = '';
+            detailView.style.boxShadow = '';
+            currentX = 0;
+            this.switchTab('view-dashboard');
+          }, 250);
+        } else {
+          detailView.style.transform = 'translateX(0px)';
+          setTimeout(() => {
+            detailView.style.transform = '';
+            detailView.style.transition = '';
+            detailView.style.boxShadow = '';
+            currentX = 0;
+          }, 250);
+        }
+      };
+
+      detailView.addEventListener('touchend', endSwipe, { passive: true });
+      detailView.addEventListener('touchcancel', endSwipe, { passive: true });
     }
 
     // IRONCLAD APP SWITCHER PRIVACY BLUR MASK
@@ -1273,6 +1351,9 @@
       this.activeProjectId = projectId;
       this.switchTab('view-project-detail');
       this.renderFullProjectView(projectId);
+      if (!history.state || history.state.view !== 'project-detail' || history.state.id !== projectId) {
+        history.pushState({ view: 'project-detail', id: projectId }, '');
+      }
     }
 
     renderFullProjectView(projectId) {

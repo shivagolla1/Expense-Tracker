@@ -733,6 +733,8 @@ body.app-privacy-locked .privacy-shield {
   display: none;
   flex-direction: column;
   gap: 20px;
+  touch-action: pan-y;
+  will-change: transform;
 }
 
 .detail-top-nav {
