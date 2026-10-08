@@ -851,13 +851,17 @@
           if (btn) {
             this.tasksViewSegmented.querySelectorAll('.segment').forEach(s => s.classList.remove('active'));
             btn.classList.add('active');
-            this.tasksSubView = btn.getAttribute('data-subview');
+            const subview = btn.getAttribute('data-subview') || btn.getAttribute('data-tasks-view');
+            this.tasksSubView = (subview === 'calendar') ? 'calendar' : 'tasks';
+
             if (this.tasksSubView === 'calendar') {
-              this.tasksCalendarContainer.style.display = 'block';
-              this.tasksListContainer.style.display = 'none';
+              if (this.tasksCalendarContainer) this.tasksCalendarContainer.style.display = 'block';
+              if (this.tasksListContainer) this.tasksListContainer.style.display = 'none';
+              this.renderAppleCalendar();
             } else {
-              this.tasksCalendarContainer.style.display = 'none';
-              this.tasksListContainer.style.display = 'block';
+              if (this.tasksCalendarContainer) this.tasksCalendarContainer.style.display = 'none';
+              if (this.tasksListContainer) this.tasksListContainer.style.display = 'block';
+              this.renderTasksList();
             }
           }
         });
