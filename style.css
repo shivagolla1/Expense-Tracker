@@ -1270,3 +1270,313 @@ input[type="time"]:focus {
 
 .btn-submit-inflow { background: var(--apple-green); color: #ffffff; }
 .btn-submit-outflow { background: var(--apple-red); color: #ffffff; }
+
+/* ==========================================================================
+   TASKS & APPLE CALENDAR MODULE STYLES
+   ========================================================================== */
+
+/* Priority Segmented Radio Styling */
+.priority-segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2px;
+  background: #e5e5ea;
+  padding: 3px;
+  border-radius: var(--radius-capsule);
+}
+
+.priority-segmented input[type="radio"] {
+  display: none !important;
+}
+
+.priority-segmented .segment-radio {
+  cursor: pointer;
+}
+
+.priority-segmented .segment-radio span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  border-radius: var(--radius-capsule);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--apple-text-secondary);
+  transition: var(--transition-apple);
+}
+
+.priority-segmented input[type="radio"]:checked + span {
+  background: #ffffff;
+  color: var(--apple-text);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Calendar Card & Grid Header */
+.calendar-card {
+  background: var(--apple-white);
+  border: 1px solid var(--apple-border);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  box-shadow: var(--shadow-apple);
+  margin-bottom: 16px;
+}
+
+.calendar-month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.calendar-month-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--apple-text);
+}
+
+.calendar-nav-btn {
+  background: #f2f2f7;
+  border: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--apple-blue);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.calendar-nav-btn:hover {
+  background: #e5e5ea;
+}
+
+.calendar-weekdays-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--apple-text-tertiary);
+  margin-bottom: 8px;
+}
+
+.calendar-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-day-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--apple-text);
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.cal-day-cell:active {
+  transform: scale(0.92);
+}
+
+.cal-day-cell.other-month {
+  color: var(--apple-text-tertiary);
+  opacity: 0.35;
+}
+
+.cal-day-cell.is-today {
+  font-weight: 700;
+  color: var(--apple-blue);
+}
+
+.cal-day-cell.is-selected {
+  background: var(--apple-blue) !important;
+  color: #ffffff !important;
+  font-weight: 700;
+}
+
+.cal-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--apple-orange);
+  position: absolute;
+  bottom: 4px;
+}
+
+.cal-day-cell.is-selected .cal-dot {
+  background: #ffffff;
+}
+
+/* Task Filter Pills */
+.task-filter-pill {
+  padding: 6px 14px;
+  border-radius: var(--radius-capsule);
+  background: #e5e5ea;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--apple-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition-apple);
+}
+
+.task-filter-pill.active {
+  background: var(--apple-blue);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Task Reminder Cards (iOS Reminders Style) */
+.task-card-apple {
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-bottom: 1px solid var(--apple-border-subtle);
+  transition: background 0.15s ease;
+}
+
+.task-card-apple:last-child {
+  border-bottom: none;
+}
+
+.task-checkbox-circle {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--apple-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.task-checkbox-circle.completed {
+  background: var(--apple-blue);
+  border-color: var(--apple-blue);
+  color: #ffffff;
+}
+
+.task-content-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.task-title-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--apple-text);
+  line-height: 1.3;
+}
+
+.task-title-text.completed {
+  text-decoration: line-through;
+  color: var(--apple-text-tertiary);
+}
+
+.task-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--apple-text-secondary);
+}
+
+.task-time-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--apple-blue);
+  font-weight: 500;
+}
+
+.task-project-chip {
+  background: #f2f2f7;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--apple-text-secondary);
+}
+
+.task-priority-badge {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.task-delete-btn {
+  background: none;
+  border: none;
+  color: var(--apple-text-tertiary);
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.task-delete-btn:hover {
+  opacity: 1.0;
+  color: var(--apple-red);
+}
+
+/* Floating Action Button (FAB) */
+.fab-add-btn {
+  position: fixed;
+  bottom: 84px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--apple-blue);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 4px 16px rgba(0, 113, 227, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 90;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fab-add-btn:active {
+  transform: scale(0.9);
+}
+
+.apple-select {
+  width: 100%;
+  height: 48px;
+  background: #f2f2f7;
+  border: 1px solid transparent;
+  border-radius: var(--radius-input);
+  padding: 0 16px;
+  color: var(--apple-text);
+  font-family: var(--font-apple);
+  font-size: 15px;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%238E8E93%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px top 50%;
+  background-size: 12px auto;
+}

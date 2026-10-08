@@ -106,6 +106,21 @@ async function initPostgresSchema() {
       );
     `);
 
+    // Create tasks table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id VARCHAR(255) PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        notes TEXT,
+        due_date TIMESTAMP WITH TIME ZONE NOT NULL,
+        priority VARCHAR(50) DEFAULT 'medium',
+        project_id VARCHAR(255),
+        completed BOOLEAN DEFAULT FALSE,
+        notified BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // Purge dummy seed records if any exist
     await client.query(`
       DELETE FROM transactions WHERE id IN ('tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106') OR project_id IN ('proj-1', 'proj-2', 'proj-3');
@@ -121,7 +136,7 @@ async function initPostgresSchema() {
 // FILE FALLBACK HELPERS
 function readJsonDB() {
   if (!fs.existsSync(DB_FILE)) {
-    const emptyData = { projects: [], transactions: [], subscriptions: [], leads: [] };
+    const emptyData = { projects: [], transactions: [], subscriptions: [], leads: [], tasks: [] };
     writeJsonDB(emptyData);
     return emptyData;
   }
@@ -133,10 +148,11 @@ function readJsonDB() {
       projects: cleanProjects,
       transactions: cleanTransactions,
       subscriptions: json.subscriptions || [],
-      leads: json.leads || []
+      leads: json.leads || [],
+      tasks: json.tasks || []
     };
   } catch (e) {
-    return { projects: [], transactions: [], subscriptions: [], leads: [] };
+    return { projects: [], transactions: [], subscriptions: [], leads: [], tasks: [] };
   }
 }
 
@@ -199,26 +215,28 @@ app.post('/api/test-push', async (req, res) => {
   });
 });
 
-// 1. GET ALL CLOUD DATA (Projects, Transactions & Leads)
+// 1. GET ALL CLOUD DATA (Projects, Transactions, Leads & Tasks)
 app.get('/api/data', async (req, res) => {
   if (usePostgres && pool) {
     try {
       const projRes = await pool.query('SELECT id, name, client, budget, created_at as "createdAt" FROM projects ORDER BY created_at ASC');
       const txRes = await pool.query('SELECT id, project_id as "projectId", type, amount, category, mode, note, date FROM transactions ORDER BY date DESC');
       const leadsRes = await pool.query('SELECT id, name, phone, followup_date as "followupDate", notes, status, notified, created_at as "createdAt" FROM potential_clients ORDER BY followup_date ASC');
+      const tasksRes = await pool.query('SELECT id, title, notes, due_date as "dueDate", priority, project_id as "projectId", completed, notified, created_at as "createdAt" FROM tasks ORDER BY due_date ASC');
 
       const projects = projRes.rows.map(r => ({ ...r, budget: Number(r.budget) }));
       const transactions = txRes.rows.map(r => ({ ...r, amount: Number(r.amount) }));
       const leads = leadsRes.rows;
+      const tasks = tasksRes.rows;
 
-      return res.json({ success: true, dbType: 'PostgreSQL', projects, transactions, leads });
+      return res.json({ success: true, dbType: 'PostgreSQL', projects, transactions, leads, tasks });
     } catch (err) {
       console.error('PostgreSQL query error, using JSON fallback:', err);
     }
   }
 
   const jsonDB = readJsonDB();
-  res.json({ success: true, dbType: 'JSON_File', projects: jsonDB.projects, transactions: jsonDB.transactions, leads: jsonDB.leads });
+  res.json({ success: true, dbType: 'JSON_File', projects: jsonDB.projects, transactions: jsonDB.transactions, leads: jsonDB.leads, tasks: jsonDB.tasks });
 });
 
 // 2. POTENTIAL CLIENTS (LEADS) ENDPOINTS
@@ -482,6 +500,138 @@ async function checkAndSendLeadFollowupReminders(nowDate) {
     }
   }
 }
+
+// 8. TASKS REST ENDPOINTS
+app.post('/api/tasks', async (req, res) => {
+  const newTask = req.body;
+  if (!newTask || !newTask.title || !newTask.dueDate) {
+    return res.status(400).json({ success: false, error: 'Invalid task payload' });
+  }
+
+  if (usePostgres && pool) {
+    try {
+      await pool.query(
+        'INSERT INTO tasks (id, title, notes, due_date, priority, project_id, completed, notified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [newTask.id, newTask.title, newTask.notes || '', newTask.dueDate, newTask.priority || 'medium', newTask.projectId || null, newTask.completed || false, false]
+      );
+      const tasksRes = await pool.query('SELECT id, title, notes, due_date as "dueDate", priority, project_id as "projectId", completed, notified, created_at as "createdAt" FROM tasks ORDER BY due_date ASC');
+      return res.json({ success: true, dbType: 'PostgreSQL', task: newTask, tasks: tasksRes.rows });
+    } catch (err) {
+      console.error('PostgreSQL task insert error:', err);
+    }
+  }
+
+  const jsonDB = readJsonDB();
+  jsonDB.tasks = jsonDB.tasks || [];
+  jsonDB.tasks.push(newTask);
+  writeJsonDB(jsonDB);
+  res.json({ success: true, dbType: 'JSON_File', task: newTask, tasks: jsonDB.tasks });
+});
+
+app.put('/api/tasks/:id', async (req, res) => {
+  const taskId = req.params.id;
+  const updated = req.body;
+
+  if (!taskId || !updated) {
+    return res.status(400).json({ success: false, error: 'Invalid update payload' });
+  }
+
+  if (usePostgres && pool) {
+    try {
+      await pool.query(
+        'UPDATE tasks SET title = $1, notes = $2, due_date = $3, priority = $4, project_id = $5, completed = $6 WHERE id = $7',
+        [updated.title, updated.notes, updated.dueDate, updated.priority, updated.projectId, updated.completed, taskId]
+      );
+      const tasksRes = await pool.query('SELECT id, title, notes, due_date as "dueDate", priority, project_id as "projectId", completed, notified, created_at as "createdAt" FROM tasks ORDER BY due_date ASC');
+      return res.json({ success: true, dbType: 'PostgreSQL', tasks: tasksRes.rows });
+    } catch (err) {
+      console.error('Error updating task in PostgreSQL:', err);
+    }
+  }
+
+  const jsonDB = readJsonDB();
+  const index = (jsonDB.tasks || []).findIndex(t => t.id === taskId);
+  if (index !== -1) {
+    jsonDB.tasks[index] = { ...jsonDB.tasks[index], ...updated };
+    writeJsonDB(jsonDB);
+  }
+  res.json({ success: true, dbType: 'JSON_File', tasks: jsonDB.tasks });
+});
+
+app.delete('/api/tasks/:id', async (req, res) => {
+  const taskId = req.params.id;
+  if (!taskId) return res.status(400).json({ success: false, error: 'Task ID required' });
+
+  if (usePostgres && pool) {
+    try {
+      await pool.query('DELETE FROM tasks WHERE id = $1', [taskId]);
+      const tasksRes = await pool.query('SELECT id, title, notes, due_date as "dueDate", priority, project_id as "projectId", completed, notified, created_at as "createdAt" FROM tasks ORDER BY due_date ASC');
+      return res.json({ success: true, dbType: 'PostgreSQL', tasks: tasksRes.rows });
+    } catch (err) {
+      console.error('Error deleting task from PostgreSQL:', err);
+    }
+  }
+
+  const jsonDB = readJsonDB();
+  jsonDB.tasks = (jsonDB.tasks || []).filter(t => t.id !== taskId);
+  writeJsonDB(jsonDB);
+  res.json({ success: true, dbType: 'JSON_File', tasks: jsonDB.tasks });
+});
+
+// TASK REMINDER TICKER (<2 MB RAM in-process loop)
+async function checkTaskReminders() {
+  const nowDate = new Date();
+  let pendingTasks = [];
+
+  if (usePostgres && pool) {
+    try {
+      const res = await pool.query(
+        'SELECT t.id, t.title, t.notes, p.name as "projectName" FROM tasks t LEFT JOIN projects p ON t.project_id = p.id WHERE t.due_date <= $1 AND t.completed = FALSE AND t.notified = FALSE',
+        [nowDate.toISOString()]
+      );
+      pendingTasks = res.rows;
+    } catch (err) {
+      console.error('Error querying due tasks from PostgreSQL:', err);
+    }
+  } else {
+    const jsonDB = readJsonDB();
+    pendingTasks = (jsonDB.tasks || []).filter(t => {
+      const due = new Date(t.dueDate);
+      return due <= nowDate && !t.completed && !t.notified;
+    }).map(t => {
+      const proj = (jsonDB.projects || []).find(p => p.id === t.projectId);
+      return { id: t.id, title: t.title, notes: t.notes, projectName: proj ? proj.name : null };
+    });
+  }
+
+  for (const task of pendingTasks) {
+    const title = `Aakruthee Task Reminder ⏰`;
+    const projTag = task.projectName ? ` • ${task.projectName}` : '';
+    const body = `${task.title}${projTag}${task.notes ? ' (' + task.notes + ')' : ''}`;
+    console.log(`Sending Task Push Notification for: ${task.title}...`);
+    
+    await sendPushNotificationToAll(title, body);
+
+    if (usePostgres && pool) {
+      try {
+        await pool.query('UPDATE tasks SET notified = TRUE WHERE id = $1', [task.id]);
+      } catch (e) {}
+    } else {
+      const jsonDB = readJsonDB();
+      const idx = (jsonDB.tasks || []).findIndex(t => t.id === task.id);
+      if (idx !== -1) {
+        jsonDB.tasks[idx].notified = true;
+        writeJsonDB(jsonDB);
+      }
+    }
+  }
+}
+
+// Background Task Ticker Loop
+setInterval(() => {
+  checkLeadReminders().catch(err => console.error('Lead ticker error:', err));
+  checkTaskReminders().catch(err => console.error('Task ticker error:', err));
+}, 60000);
 
 async function sendPushNotificationToAll(title, body) {
   let subscriptions = [];

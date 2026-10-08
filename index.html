@@ -141,8 +141,8 @@
         </div>
       </section>
 
-      <!-- TAB 3: POTENTIAL CLIENTS (LEADS) VIEW -->
-      <section id="view-leads" class="tab-view">
+      <!-- TAB 3: POTENTIAL CLIENTS (LEADS) VIEW (FEATURE FLAGGED) -->
+      <section id="view-leads" class="tab-view" style="display:none;">
         <div class="apple-page-header">
           <div>
             <h2>Potential Clients</h2>
@@ -154,6 +154,69 @@
         <div class="apple-leads-list" id="leads-grid">
           <!-- Dynamically populated potential client cards -->
         </div>
+      </section>
+
+      <!-- TAB 3: TASKS & CALENDAR VIEW -->
+      <section id="view-tasks" class="tab-view">
+        <div class="apple-page-header">
+          <div>
+            <h2>Tasks & Schedule</h2>
+            <span class="page-subtitle">Reminders & Calendar</span>
+          </div>
+        </div>
+
+        <div class="apple-segmented-control" id="tasks-view-segmented" style="margin-bottom:14px;">
+          <button class="segment active" data-tasks-view="calendar">📅 Calendar</button>
+          <button class="segment" data-tasks-view="list">📋 Tasks</button>
+        </div>
+
+        <!-- SUB-VIEW 1: APPLE CALENDAR -->
+        <div id="tasks-calendar-container" class="tasks-subview active">
+          <div class="apple-card calendar-hero-card">
+            <div class="calendar-month-header">
+              <button class="cal-nav-btn" id="cal-prev-month">‹</button>
+              <h3 id="cal-month-title">October 2026</h3>
+              <button class="cal-nav-btn" id="cal-next-month">›</button>
+            </div>
+
+            <div class="calendar-weekdays-row">
+              <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+            </div>
+
+            <div class="calendar-days-grid" id="apple-calendar-grid">
+              <!-- Dynamically populated month grid -->
+            </div>
+          </div>
+
+          <div class="calendar-selected-day-section">
+            <h4 id="selected-day-title" style="font-size:15px; font-weight:700; margin-bottom:10px; color:var(--apple-text);">Tasks for Selected Date</h4>
+            <div id="selected-day-tasks-list" class="apple-group-list">
+              <!-- Dynamically populated tasks for selected day -->
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-VIEW 2: REMINDERS TASK LIST -->
+        <div id="tasks-list-container" class="tasks-subview" style="display:none;">
+          <div class="reminders-filter-pills" id="task-filter-pills" style="display:flex; gap:8px; margin-bottom:14px; overflow-x:auto; padding-bottom:2px;">
+            <button class="task-filter-pill active" data-task-filter="all">All Tasks</button>
+            <button class="task-filter-pill" data-task-filter="today">Today</button>
+            <button class="task-filter-pill" data-task-filter="scheduled">Upcoming</button>
+            <button class="task-filter-pill" data-task-filter="completed">Completed</button>
+          </div>
+
+          <div class="apple-group-list" id="tasks-reminders-list">
+            <!-- Dynamically populated task cards -->
+          </div>
+        </div>
+
+        <!-- FLOATING ADD TASK BUTTON (FAB) -->
+        <button class="fab-add-btn" id="btn-add-task-fab" title="Add Task">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
       </section>
 
       <!-- TAB 4: RECENT ACTIVITY FEED -->
@@ -242,7 +305,7 @@
     </main>
 
     <!-- APPLE 4-TAB BOTTOM NAVIGATOR BAR -->
-    <nav class="apple-bottom-nav four-tabs">
+    <nav class="apple-bottom-nav four-tabs" id="apple-main-nav">
       <button class="nav-item active" data-tab="view-quick-entry">
         <div class="nav-icon">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -264,7 +327,17 @@
         <span>Projects</span>
       </button>
 
-      <button class="nav-item" data-tab="view-leads">
+      <button class="nav-item" data-tab="view-tasks" id="nav-item-tasks">
+        <div class="nav-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
+        </div>
+        <span>Tasks</span>
+      </button>
+
+      <button class="nav-item" data-tab="view-leads" id="nav-item-leads" style="display:none;">
         <div class="nav-icon">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -508,6 +581,70 @@
 
           <button type="submit" class="apple-submit-btn">
             Save Lead & Schedule Reminder
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- NEW TASK MODAL -->
+    <div class="bottom-sheet-overlay" id="sheet-task-overlay">
+      <div class="bottom-sheet" id="sheet-task">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <h3>Add New Task</h3>
+          <button class="close-sheet" data-close="sheet-task-overlay">&times;</button>
+        </div>
+
+        <form id="form-task" class="sheet-form">
+          <div class="form-group">
+            <label class="form-label" for="task-title">Task Title</label>
+            <input type="text" id="task-title" placeholder="e.g. Site Visit & Client Sign-off" required>
+          </div>
+
+          <div class="form-group-row">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label" for="task-date">Due Date</label>
+              <input type="date" id="task-date" required>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label" for="task-time">Due Time</label>
+              <input type="time" id="task-time" value="10:00" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Priority</label>
+            <div class="apple-segmented-control priority-segmented">
+              <label class="segment-radio">
+                <input type="radio" name="task-priority" value="high">
+                <span>🔴 High</span>
+              </label>
+              <label class="segment-radio">
+                <input type="radio" name="task-priority" value="medium" checked>
+                <span>🟠 Medium</span>
+              </label>
+              <label class="segment-radio">
+                <input type="radio" name="task-priority" value="low">
+                <span>🔵 Low</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="task-project-id">Link to Project (Optional)</label>
+            <select id="task-project-id" class="apple-select">
+              <option value="">General (No Project)</option>
+              <!-- Dynamic project options -->
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="task-notes">Notes (Optional)</label>
+            <input type="text" id="task-notes" placeholder="e.g. Bring updated 3D layout printouts">
+          </div>
+
+          <button type="submit" class="apple-submit-btn">
+            Save Task & Sync Calendar
           </button>
         </form>
       </div>

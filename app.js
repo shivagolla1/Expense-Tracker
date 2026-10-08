@@ -9,19 +9,28 @@
     PROJECTS: 'aakruthee_projects_prod_v3',
     TRANSACTIONS: 'aakruthee_transactions_prod_v3',
     LEADS: 'aakruthee_leads_prod_v1',
+    TASKS: 'aakruthee_tasks_prod_v1',
     PASSKEY_CRED_ID: 'aakruthee_passkey_cred_id_prod_v3',
     NOTIF_ONBOARDED: 'aakruthee_notif_onboarded_v1'
   };
 
   class AakrutheeApp {
     constructor() {
+      this.ENABLE_LEADS_TAB = false;
       this.projects = [];
       this.transactions = [];
       this.leads = [];
+      this.tasks = [];
+      
       this.activeTab = 'view-quick-entry';
       this.activeProjectId = null;
       this.activityFilter = 'all';
       this.isUnlocked = false;
+
+      this.tasksSubView = 'calendar'; // 'calendar' | 'tasks'
+      this.taskFilter = 'all'; // 'all' | 'today' | 'scheduled' | 'completed'
+      this.calendarCurrentDate = new Date();
+      this.calendarSelectedDateStr = new Date().toISOString().split('T')[0];
 
       this.selectedTxForAction = null;
       this.editingTxId = null;
@@ -334,6 +343,7 @@
             this.projects = (data.projects || []).filter(p => !['proj-1', 'proj-2', 'proj-3'].includes(p.id));
             this.transactions = (data.transactions || []).filter(t => !['tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106'].includes(t.id) && !['proj-1', 'proj-2', 'proj-3'].includes(t.projectId));
             this.leads = data.leads || [];
+            this.tasks = data.tasks || [];
             this.saveLocalCache();
             this.render();
             return;
@@ -351,15 +361,18 @@
       const storedProj = localStorage.getItem(STORAGE_KEYS.PROJECTS);
       const storedTx = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
       const storedLeads = localStorage.getItem(STORAGE_KEYS.LEADS);
+      const storedTasks = localStorage.getItem(STORAGE_KEYS.TASKS);
 
       try {
         this.projects = storedProj ? (JSON.parse(storedProj) || []) : [];
         this.transactions = storedTx ? (JSON.parse(storedTx) || []) : [];
         this.leads = storedLeads ? (JSON.parse(storedLeads) || []) : [];
+        this.tasks = storedTasks ? (JSON.parse(storedTasks) || []) : [];
       } catch (e) {
         this.projects = [];
         this.transactions = [];
         this.leads = [];
+        this.tasks = [];
       }
     }
 
@@ -367,6 +380,7 @@
       localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(this.projects));
       localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(this.transactions));
       localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify(this.leads));
+      localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(this.tasks));
     }
 
     async saveLeadToCloud(newLead) {
@@ -719,9 +733,39 @@
 
       this.btnEnableNotifications = document.getElementById('btn-enable-notifications');
       this.btnSkipNotifications = document.getElementById('btn-skip-notifications');
+
+      // Tasks & Calendar Elements
+      this.sheetTaskOverlay = document.getElementById('sheet-task-overlay');
+      this.formTask = document.getElementById('form-task');
+      this.btnAddTaskFab = document.getElementById('btn-add-task-fab');
+      this.tasksViewSegmented = document.getElementById('tasks-view-segmented');
+      this.tasksCalendarContainer = document.getElementById('tasks-calendar-container');
+      this.tasksListContainer = document.getElementById('tasks-list-container');
+      this.appleCalendarGrid = document.getElementById('apple-calendar-grid');
+      this.calMonthTitle = document.getElementById('cal-month-title');
+      this.calPrevMonth = document.getElementById('cal-prev-month');
+      this.calNextMonth = document.getElementById('cal-next-month');
+      this.selectedDayTasksList = document.getElementById('selected-day-tasks-list');
+      this.selectedDayHeader = document.getElementById('selected-day-header');
+      this.tasksRemindersList = document.getElementById('tasks-reminders-list');
+      this.taskFilterPills = document.getElementById('task-filter-pills');
+      this.taskProjectIdSelect = document.getElementById('task-project-id');
+      this.navItemLeads = document.getElementById('nav-item-leads');
+      this.navItemTasks = document.getElementById('nav-item-tasks');
     }
 
     bindEvents() {
+      // Manage Leads / Tasks Navigation according to ENABLE_LEADS_TAB flag
+      if (this.navItemLeads && this.navItemTasks) {
+        if (!this.ENABLE_LEADS_TAB) {
+          this.navItemLeads.style.display = 'none';
+          this.navItemTasks.style.display = 'flex';
+        } else {
+          this.navItemLeads.style.display = 'flex';
+          this.navItemTasks.style.display = 'flex';
+        }
+      }
+
       this.btnUnlockApp.addEventListener('click', () => this.handleUnlockButtonClick());
       this.btnManualLock.addEventListener('click', () => this.lockApp());
       if (this.btnTestNotification) {
@@ -764,6 +808,64 @@
           const today = new Date().toISOString().split('T')[0];
           document.getElementById('lead-date').value = today;
           this.openSheet(this.sheetLeadOverlay);
+        });
+      }
+
+      // FAB ADD TASK BUTTON
+      if (this.btnAddTaskFab) {
+        this.btnAddTaskFab.addEventListener('click', () => {
+          if (this.formTask) this.formTask.reset();
+          const today = new Date().toISOString().split('T')[0];
+          const taskDateInput = document.getElementById('task-date');
+          if (taskDateInput) taskDateInput.value = this.calendarSelectedDateStr || today;
+          this.renderProjectSelectOptions();
+          this.openSheet(this.sheetTaskOverlay);
+        });
+      }
+
+      // TASKS SEGMENTED VIEW SWITCHER
+      if (this.tasksViewSegmented) {
+        this.tasksViewSegmented.addEventListener('click', (e) => {
+          const btn = e.target.closest('.segment');
+          if (btn) {
+            this.tasksViewSegmented.querySelectorAll('.segment').forEach(s => s.classList.remove('active'));
+            btn.classList.add('active');
+            this.tasksSubView = btn.getAttribute('data-subview');
+            if (this.tasksSubView === 'calendar') {
+              this.tasksCalendarContainer.style.display = 'block';
+              this.tasksListContainer.style.display = 'none';
+            } else {
+              this.tasksCalendarContainer.style.display = 'none';
+              this.tasksListContainer.style.display = 'block';
+            }
+          }
+        });
+      }
+
+      // CALENDAR MONTH NAVIGATION
+      if (this.calPrevMonth) {
+        this.calPrevMonth.addEventListener('click', () => {
+          this.calendarCurrentDate.setMonth(this.calendarCurrentDate.getMonth() - 1);
+          this.renderAppleCalendar();
+        });
+      }
+      if (this.calNextMonth) {
+        this.calNextMonth.addEventListener('click', () => {
+          this.calendarCurrentDate.setMonth(this.calendarCurrentDate.getMonth() + 1);
+          this.renderAppleCalendar();
+        });
+      }
+
+      // TASK FILTER PILLS
+      if (this.taskFilterPills) {
+        this.taskFilterPills.addEventListener('click', (e) => {
+          const pill = e.target.closest('.task-filter-pill');
+          if (pill) {
+            this.taskFilterPills.querySelectorAll('.task-filter-pill').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            this.taskFilter = pill.getAttribute('data-task-filter');
+            this.renderTasksList();
+          }
         });
       }
 
@@ -850,6 +952,9 @@
       this.formProject.addEventListener('submit', (e) => this.handleProjectSubmit(e));
       if (this.formLead) {
         this.formLead.addEventListener('submit', (e) => this.handleLeadSubmit(e));
+      }
+      if (this.formTask) {
+        this.formTask.addEventListener('submit', (e) => this.handleTaskSubmit(e));
       }
 
       this.activityFilterPills.addEventListener('click', (e) => {
@@ -1222,11 +1327,302 @@
       this.renderProjectsDashboard();
       this.renderProjectChips();
       this.renderLeadsGrid();
+      this.renderAppleCalendar();
+      this.renderTasksList();
       this.renderActivityFeed();
 
       if (this.activeTab === 'view-project-detail' && this.activeProjectId) {
         this.renderFullProjectView(this.activeProjectId);
       }
+    }
+
+    // TASK & CALENDAR API HELPERS & RENDERERS
+    async saveTaskToCloud(newTask) {
+      this.tasks.push(newTask);
+      this.saveLocalCache();
+      this.render();
+      this.showToast(`Task "${newTask.title}" added & scheduled!`, 'success');
+
+      try {
+        const response = await fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newTask)
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.tasks) {
+            this.tasks = data.tasks;
+            this.saveLocalCache();
+            this.render();
+          }
+        }
+      } catch (err) {
+        console.log('Failed to post task to cloud API, saved locally:', err);
+      }
+    }
+
+    async toggleTaskCompleted(taskId) {
+      const task = this.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      task.completed = !task.completed;
+      this.saveLocalCache();
+      this.render();
+      this.showToast(task.completed ? '✓ Task completed!' : 'Task reopened', 'success');
+
+      try {
+        const response = await fetch(`/api/tasks/${taskId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(task)
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.tasks) {
+            this.tasks = data.tasks;
+            this.saveLocalCache();
+            this.render();
+          }
+        }
+      } catch (err) {
+        console.log('Failed to update task completion on cloud:', err);
+      }
+    }
+
+    async deleteTaskFromCloud(taskId) {
+      const task = this.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      if (!confirm(`Delete task "${task.title}"?`)) return;
+
+      this.tasks = this.tasks.filter(t => t.id !== taskId);
+      this.saveLocalCache();
+      this.render();
+      this.showToast(`Deleted task "${task.title}"`, 'success');
+
+      try {
+        const response = await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.tasks) {
+            this.tasks = data.tasks;
+            this.saveLocalCache();
+            this.render();
+          }
+        }
+      } catch (err) {
+        console.log('Failed to delete task from cloud:', err);
+      }
+    }
+
+    async handleTaskSubmit(e) {
+      e.preventDefault();
+      const title = document.getElementById('task-title').value.trim();
+      const dateVal = document.getElementById('task-date').value;
+      const timeVal = document.getElementById('task-time').value || '10:00';
+      const priorityRadio = this.formTask.querySelector('input[name="task-priority"]:checked');
+      const priority = priorityRadio ? priorityRadio.value : 'medium';
+      const projectId = this.taskProjectIdSelect.value || null;
+      const notes = document.getElementById('task-notes').value.trim();
+
+      if (!title || !dateVal) return;
+
+      const dueISO = new Date(`${dateVal}T${timeVal}:00`).toISOString();
+
+      const newTask = {
+        id: 'task-' + Date.now(),
+        title,
+        notes,
+        dueDate: dueISO,
+        priority,
+        projectId,
+        completed: false,
+        notified: false,
+        createdAt: new Date().toISOString()
+      };
+
+      await this.saveTaskToCloud(newTask);
+      this.formTask.reset();
+      this.closeSheet(this.sheetTaskOverlay);
+    }
+
+    renderProjectSelectOptions() {
+      if (!this.taskProjectIdSelect) return;
+      this.taskProjectIdSelect.innerHTML = `<option value="">General (No Project)</option>`;
+      (this.projects || []).forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name;
+        this.taskProjectIdSelect.appendChild(opt);
+      });
+    }
+
+    renderAppleCalendar() {
+      if (!this.appleCalendarGrid) return;
+
+      const year = this.calendarCurrentDate.getFullYear();
+      const month = this.calendarCurrentDate.getMonth();
+
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      if (this.calMonthTitle) {
+        this.calMonthTitle.textContent = `${monthNames[month]} ${year}`;
+      }
+
+      const firstDayIndex = new Date(year, month, 1).getDay(); // 0 = Sun
+      const lastDayDate = new Date(year, month + 1, 0).getDate();
+      const prevLastDayDate = new Date(year, month, 0).getDate();
+
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      this.appleCalendarGrid.innerHTML = '';
+
+      // Previous month padding days
+      for (let i = firstDayIndex - 1; i >= 0; i--) {
+        const dayNum = prevLastDayDate - i;
+        const cell = document.createElement('div');
+        cell.className = 'cal-day-cell other-month';
+        cell.textContent = dayNum;
+        this.appleCalendarGrid.appendChild(cell);
+      }
+
+      // Current month days
+      for (let d = 1; d <= lastDayDate; d++) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-day-cell';
+        
+        const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        cell.textContent = d;
+
+        if (dStr === todayStr) cell.classList.add('is-today');
+        if (dStr === this.calendarSelectedDateStr) cell.classList.add('is-selected');
+
+        // Check if tasks scheduled on this day
+        const hasTasks = (this.tasks || []).some(t => {
+          const tDateStr = new Date(t.dueDate).toISOString().split('T')[0];
+          return tDateStr === dStr && !t.completed;
+        });
+
+        if (hasTasks) {
+          const dot = document.createElement('div');
+          dot.className = 'cal-dot';
+          cell.appendChild(dot);
+        }
+
+        cell.addEventListener('click', () => {
+          this.calendarSelectedDateStr = dStr;
+          this.renderAppleCalendar();
+        });
+
+        this.appleCalendarGrid.appendChild(cell);
+      }
+
+      this.renderSelectedDayTasks();
+    }
+
+    renderSelectedDayTasks() {
+      if (!this.selectedDayTasksList) return;
+      this.selectedDayTasksList.innerHTML = '';
+
+      const selDateObj = new Date(this.calendarSelectedDateStr + 'T00:00:00');
+      const dateFormattedStr = selDateObj.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+      if (this.selectedDayHeader) {
+        this.selectedDayHeader.textContent = `Schedule for ${dateFormattedStr}`;
+      }
+
+      const dayTasks = (this.tasks || []).filter(t => {
+        const tDateStr = new Date(t.dueDate).toISOString().split('T')[0];
+        return tDateStr === this.calendarSelectedDateStr;
+      }).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+      if (dayTasks.length === 0) {
+        this.selectedDayTasksList.innerHTML = `
+          <div style="text-align:center; padding:20px; color:var(--apple-text-tertiary); font-size:13px;">
+            No tasks scheduled for ${dateFormattedStr}
+          </div>
+        `;
+        return;
+      }
+
+      dayTasks.forEach(task => {
+        const card = this.createTaskCardDOM(task);
+        this.selectedDayTasksList.appendChild(card);
+      });
+    }
+
+    renderTasksList() {
+      if (!this.tasksRemindersList) return;
+      this.tasksRemindersList.innerHTML = '';
+
+      let filtered = [...(this.tasks || [])];
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      if (this.taskFilter === 'today') {
+        filtered = filtered.filter(t => {
+          const tDateStr = new Date(t.dueDate).toISOString().split('T')[0];
+          return tDateStr === todayStr;
+        });
+      } else if (this.taskFilter === 'scheduled') {
+        filtered = filtered.filter(t => !t.completed);
+      } else if (this.taskFilter === 'completed') {
+        filtered = filtered.filter(t => t.completed);
+      }
+
+      filtered.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+      if (filtered.length === 0) {
+        this.tasksRemindersList.innerHTML = `
+          <div style="text-align:center; padding:32px 16px; color:var(--apple-text-secondary); font-size:13px;">
+            <div style="font-size:28px; margin-bottom:6px;">📋</div>
+            No tasks found in this view.
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(task => {
+        const card = this.createTaskCardDOM(task);
+        this.tasksRemindersList.appendChild(card);
+      });
+    }
+
+    createTaskCardDOM(task) {
+      const card = document.createElement('div');
+      card.className = 'task-card-apple';
+
+      const dueObj = new Date(task.dueDate);
+      const dateStr = dueObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+      const timeStr = dueObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+      const proj = (this.projects || []).find(p => p.id === task.projectId);
+      const projName = proj ? proj.name : null;
+
+      let prioTag = '🟠';
+      if (task.priority === 'high') prioTag = '🔴';
+      if (task.priority === 'low') prioTag = '🔵';
+
+      card.innerHTML = `
+        <div class="task-checkbox-circle ${task.completed ? 'completed' : ''}" data-toggle-id="${task.id}">
+          ${task.completed ? '✓' : ''}
+        </div>
+        <div class="task-content-main">
+          <div class="task-title-text ${task.completed ? 'completed' : ''}">${prioTag} ${this.escapeHTML(task.title)}</div>
+          <div class="task-meta-row">
+            <span class="task-time-chip">⏰ ${dateStr}, ${timeStr}</span>
+            ${projName ? `<span class="task-project-chip">🏗️ ${this.escapeHTML(projName)}</span>` : ''}
+            ${task.notes ? `<span>📝 ${this.escapeHTML(task.notes)}</span>` : ''}
+          </div>
+        </div>
+        <button class="task-delete-btn" data-delete-id="${task.id}" title="Delete Task">🗑️</button>
+      `;
+
+      card.querySelector('[data-toggle-id]').addEventListener('click', () => {
+        this.toggleTaskCompleted(task.id);
+      });
+
+      card.querySelector('[data-delete-id]').addEventListener('click', () => {
+        this.deleteTaskFromCloud(task.id);
+      });
+
+      return card;
     }
 
     renderProjectsDashboard() {
