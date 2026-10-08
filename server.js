@@ -629,7 +629,7 @@ async function checkTaskReminders() {
 
 // Background Task Ticker Loop
 setInterval(() => {
-  checkLeadReminders().catch(err => console.error('Lead ticker error:', err));
+  checkAndSendLeadFollowupReminders(new Date()).catch(err => console.error('Lead ticker error:', err));
   checkTaskReminders().catch(err => console.error('Task ticker error:', err));
 }, 60000);
 
