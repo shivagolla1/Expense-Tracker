@@ -1580,3 +1580,14 @@ input[type="time"]:focus {
   background-position: right 16px top 50%;
   background-size: 12px auto;
 }
+
+@keyframes taskPulseGlow {
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(0, 113, 227, 0); }
+  50% { transform: scale(1.02); box-shadow: 0 0 16px rgba(0, 113, 227, 0.4); background: rgba(0, 113, 227, 0.08); }
+  100% { transform: scale(1); box-shadow: 0 0 0 rgba(0, 113, 227, 0); }
+}
+
+.task-card-apple.highlight-pulse {
+  animation: taskPulseGlow 1.8s ease-in-out 2;
+  border-color: var(--apple-blue) !important;
+}

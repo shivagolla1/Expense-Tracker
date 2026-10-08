@@ -53,6 +53,7 @@
       this.clearLegacyDummyCache();
       await this.loadCloudData();
       await this.fetchVapidKey();
+      this.listenForNotificationDeepLinks();
     }
 
     async registerServiceWorker() {
@@ -333,6 +334,24 @@
       setupLiveFormatting('proj-budget', 'proj-budget-subtext');
     }
 
+    cleanupPreviousMonthCompletedTasks() {
+      const now = new Date();
+      const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const initialCount = (this.tasks || []).length;
+      this.tasks = (this.tasks || []).filter(t => {
+        if (t.completed) {
+          const due = new Date(t.dueDate);
+          return due >= startOfCurrentMonth;
+        }
+        return true;
+      });
+
+      if (this.tasks.length !== initialCount) {
+        this.saveLocalCache();
+      }
+    }
+
     // CLOUD API INTEGRATION
     async loadCloudData() {
       try {
@@ -344,6 +363,7 @@
             this.transactions = (data.transactions || []).filter(t => !['tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106'].includes(t.id) && !['proj-1', 'proj-2', 'proj-3'].includes(t.projectId));
             this.leads = data.leads || [];
             this.tasks = data.tasks || [];
+            this.cleanupPreviousMonthCompletedTasks();
             this.saveLocalCache();
             this.render();
             return;
@@ -368,6 +388,7 @@
         this.transactions = storedTx ? (JSON.parse(storedTx) || []) : [];
         this.leads = storedLeads ? (JSON.parse(storedLeads) || []) : [];
         this.tasks = storedTasks ? (JSON.parse(storedTasks) || []) : [];
+        this.cleanupPreviousMonthCompletedTasks();
       } catch (e) {
         this.projects = [];
         this.transactions = [];
@@ -1239,6 +1260,18 @@
         }
       });
 
+      if (tabId === 'view-tasks') {
+        this.tasksSubView = 'calendar';
+        if (this.tasksViewSegmented) {
+          this.tasksViewSegmented.querySelectorAll('.segment').forEach(s => {
+            if (s.getAttribute('data-subview') === 'calendar') s.classList.add('active');
+            else s.classList.remove('active');
+          });
+        }
+        if (this.tasksCalendarContainer) this.tasksCalendarContainer.style.display = 'block';
+        if (this.tasksListContainer) this.tasksListContainer.style.display = 'none';
+      }
+
       this.render();
     }
 
@@ -1528,9 +1561,10 @@
         this.selectedDayHeader.textContent = `Schedule for ${dateFormattedStr}`;
       }
 
+      // Hide completed tasks from calendar day schedule
       const dayTasks = (this.tasks || []).filter(t => {
         const tDateStr = new Date(t.dueDate).toISOString().split('T')[0];
-        return tDateStr === this.calendarSelectedDateStr;
+        return !t.completed && tDateStr === this.calendarSelectedDateStr;
       }).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
       if (dayTasks.length === 0) {
@@ -1555,10 +1589,12 @@
       let filtered = [...(this.tasks || [])];
       const todayStr = new Date().toISOString().split('T')[0];
 
-      if (this.taskFilter === 'today') {
+      if (this.taskFilter === 'all') {
+        filtered = filtered.filter(t => !t.completed);
+      } else if (this.taskFilter === 'today') {
         filtered = filtered.filter(t => {
           const tDateStr = new Date(t.dueDate).toISOString().split('T')[0];
-          return tDateStr === todayStr;
+          return !t.completed && tDateStr === todayStr;
         });
       } else if (this.taskFilter === 'scheduled') {
         filtered = filtered.filter(t => !t.completed);
@@ -1587,6 +1623,7 @@
     createTaskCardDOM(task) {
       const card = document.createElement('div');
       card.className = 'task-card-apple';
+      card.setAttribute('data-task-card-id', task.id);
 
       const dueObj = new Date(task.dueDate);
       const dateStr = dueObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
@@ -1623,6 +1660,70 @@
       });
 
       return card;
+    }
+
+    listenForNotificationDeepLinks() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          if (event.data && event.data.type === 'OPEN_TASK' && event.data.taskId) {
+            this.openAndHighlightTask(event.data.taskId);
+          }
+        });
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const taskIdFromURL = urlParams.get('task_id');
+      if (taskIdFromURL) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        setTimeout(() => this.openAndHighlightTask(taskIdFromURL), 600);
+      }
+    }
+
+    openAndHighlightTask(taskId) {
+      const task = (this.tasks || []).find(t => t.id === taskId);
+      if (!task) {
+        this.showToast('Notification task not found', 'error');
+        return;
+      }
+
+      const dueObj = new Date(task.dueDate);
+      const dateStr = dueObj.toISOString().split('T')[0];
+
+      this.calendarCurrentDate = new Date(dueObj.getFullYear(), dueObj.getMonth(), 1);
+      this.calendarSelectedDateStr = dateStr;
+
+      this.switchTab('view-tasks');
+
+      if (task.completed) {
+        this.tasksSubView = 'tasks';
+        if (this.tasksViewSegmented) {
+          this.tasksViewSegmented.querySelectorAll('.segment').forEach(s => {
+            if (s.getAttribute('data-subview') === 'tasks') s.classList.add('active');
+            else s.classList.remove('active');
+          });
+        }
+        if (this.tasksCalendarContainer) this.tasksCalendarContainer.style.display = 'none';
+        if (this.tasksListContainer) this.tasksListContainer.style.display = 'block';
+
+        this.taskFilter = 'completed';
+        if (this.taskFilterPills) {
+          this.taskFilterPills.querySelectorAll('.task-filter-pill').forEach(p => {
+            if (p.getAttribute('data-task-filter') === 'completed') p.classList.add('active');
+            else p.classList.remove('active');
+          });
+        }
+      }
+
+      this.render();
+
+      setTimeout(() => {
+        const targetCard = document.querySelector(`[data-task-card-id="${task.id}"]`);
+        if (targetCard) {
+          targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          targetCard.classList.add('highlight-pulse');
+          setTimeout(() => targetCard.classList.remove('highlight-pulse'), 3600);
+        }
+      }, 350);
     }
 
     renderProjectsDashboard() {

@@ -579,7 +579,30 @@ app.delete('/api/tasks/:id', async (req, res) => {
 });
 
 // TASK REMINDER TICKER (<2 MB RAM in-process loop)
+async function cleanupPreviousMonthCompletedTasks() {
+  const now = new Date();
+  const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  if (usePostgres && pool) {
+    try {
+      await pool.query(
+        `DELETE FROM tasks WHERE completed = TRUE AND due_date < DATE_TRUNC('month', CURRENT_TIMESTAMP)`
+      );
+    } catch (err) {
+      console.error('Error cleaning up previous month completed tasks in PostgreSQL:', err);
+    }
+  } else {
+    const jsonDB = readJsonDB();
+    if (jsonDB.tasks) {
+      jsonDB.tasks = jsonDB.tasks.filter(t => !(t.completed && new Date(t.dueDate) < startOfCurrentMonth));
+      writeJsonDB(jsonDB);
+    }
+  }
+}
+
 async function checkTaskReminders() {
+  await cleanupPreviousMonthCompletedTasks();
+
   const nowDate = new Date();
   let pendingTasks = [];
 
@@ -610,7 +633,7 @@ async function checkTaskReminders() {
     const body = `${task.title}${projTag}${task.notes ? ' (' + task.notes + ')' : ''}`;
     console.log(`Sending Task Push Notification for: ${task.title}...`);
     
-    await sendPushNotificationToAll(title, body);
+    await sendPushNotificationToAll(title, body, task.id);
 
     if (usePostgres && pool) {
       try {
@@ -633,7 +656,7 @@ setInterval(() => {
   checkTaskReminders().catch(err => console.error('Task ticker error:', err));
 }, 60000);
 
-async function sendPushNotificationToAll(title, body) {
+async function sendPushNotificationToAll(title, body, taskId = null) {
   let subscriptions = [];
   if (usePostgres && pool) {
     try {
@@ -646,7 +669,12 @@ async function sendPushNotificationToAll(title, body) {
     subscriptions = readJsonDB().subscriptions || [];
   }
 
-  const payload = JSON.stringify({ title, body });
+  const payload = JSON.stringify({ 
+    title, 
+    body, 
+    taskId: taskId || null,
+    url: taskId ? `/?task_id=${taskId}` : '/'
+  });
   let sentCount = 0;
   let failedCount = 0;
 
