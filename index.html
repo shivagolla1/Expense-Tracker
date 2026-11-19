@@ -122,6 +122,23 @@
                 <span class="btn-subtitle">Materials, Labor or Vendor Pay</span>
               </div>
             </button>
+
+            <button class="apple-hero-btn btn-quotes-action" id="hero-btn-quotes">
+              <div class="btn-icon-wrapper">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+              </div>
+              <div class="btn-text-wrapper">
+                <span class="btn-title">📑 Quotations & Estimates</span>
+                <span class="btn-subtitle">Room-by-Room Interior Proposal</span>
+              </div>
+            </button>
           </div>
         </div>
       </section>
@@ -299,6 +316,152 @@
           <div class="apple-group-list" id="full-project-tx-list">
             <!-- Project specific transactions -->
           </div>
+        </div>
+      </section>
+
+      <!-- FULL PAGE VIEW: QUOTATIONS HUB -->
+      <section id="view-quotes-hub" class="tab-view full-page-view">
+        <div class="detail-top-nav">
+          <button class="apple-back-btn" id="btn-back-from-quotes">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            Home
+          </button>
+          <button class="apple-btn-primary" id="btn-create-quote-top" style="padding: 8px 16px; font-size: 13px;">
+            + New Quote
+          </button>
+        </div>
+
+        <div class="apple-page-header" style="margin-top: 10px;">
+          <div>
+            <h2>Quotations & Estimates</h2>
+            <span class="page-subtitle">Room-by-room client interior proposals</span>
+          </div>
+        </div>
+
+        <div class="apple-quotes-list" id="quotes-list-container">
+          <!-- Dynamically populated quote cards -->
+        </div>
+      </section>
+
+      <!-- FULL PAGE VIEW: INTERIOR QUOTE BUILDER -->
+      <section id="view-quote-detail" class="tab-view full-page-view">
+        <div class="detail-top-nav">
+          <button class="apple-back-btn" id="btn-back-to-quotes-hub">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            Quotes
+          </button>
+          <div class="quote-header-actions">
+            <button class="apple-action-btn-sm btn-quote-wa" id="btn-quote-whatsapp" title="Send WhatsApp Quotation">
+              💬 WhatsApp
+            </button>
+            <button class="apple-action-btn-sm btn-quote-print" id="btn-quote-print" title="Print / PDF Quotation">
+              📄 Print / PDF
+            </button>
+            <button class="apple-delete-proj-btn" id="btn-delete-quote" title="Delete Quote">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- ESTIMATE HERO TOTAL CARD -->
+        <div class="apple-card quote-hero-card">
+          <div class="quote-meta-row">
+            <div>
+              <h2 id="quote-client-heading" style="font-size:20px; font-weight:700; color:var(--apple-text);">Client Name</h2>
+              <div class="quote-project-sub" id="quote-project-sub">Project / Apartment Name</div>
+            </div>
+            <div class="quote-status-pill" id="quote-status-pill">Draft</div>
+          </div>
+
+          <div class="apple-balance-display" style="margin-top:14px; margin-bottom:12px;">
+            <span class="balance-label">Total Estimated Proposal</span>
+            <div class="balance-amount text-blue" id="quote-net-total-display">₹0</div>
+            <div class="quote-amount-words" id="quote-amount-words">Zero Rupees</div>
+          </div>
+
+          <div class="apple-metrics-row" style="padding-top:10px; border-top:1px solid var(--apple-border-subtle);">
+            <div class="metric-item">
+              <span class="lbl">Gross Subtotal</span>
+              <span class="val" id="quote-gross-display">₹0</span>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric-item">
+              <span class="lbl">Discount</span>
+              <span class="val text-green" id="quote-discount-display">- ₹0</span>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric-item">
+              <span class="lbl">Rooms Configured</span>
+              <span class="val" id="quote-rooms-count">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROOMS CONTAINER -->
+        <div class="quote-rooms-section">
+          <div class="quote-rooms-header">
+            <h3>Rooms & Spaces</h3>
+            <button class="apple-btn-secondary-sm" id="btn-add-room-trigger">
+              + Add Room
+            </button>
+          </div>
+
+          <div id="quote-rooms-container" class="quote-rooms-list">
+            <!-- Dynamically populated room cards -->
+          </div>
+
+          <button class="apple-dashed-add-btn" id="btn-add-room-bottom">
+            <span>+ Add Another Room (Living, Bed, Kitchen...)</span>
+          </button>
+        </div>
+
+        <!-- COMMERCIALS, DISCOUNT & PAYMENT MILESTONES -->
+        <div class="apple-card quote-commercials-card">
+          <h3 style="font-size:16px; font-weight:700; margin-bottom:12px; color:var(--apple-text);">Commercials & Discount</h3>
+          
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label" for="quote-discount-input">Special Studio Discount (₹)</label>
+            <div class="input-with-symbol">
+              <span class="currency-symbol">₹</span>
+              <input type="text" id="quote-discount-input" placeholder="0" inputmode="decimal">
+            </div>
+          </div>
+
+          <div class="tax-toggle-row">
+            <div>
+              <div style="font-size:14px; font-weight:600; color:var(--apple-text);">Include 18% GST</div>
+              <div style="font-size:12px; color:var(--apple-text-secondary);">For formal tax invoice proposals</div>
+            </div>
+            <label class="apple-switch">
+              <input type="checkbox" id="quote-gst-toggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="payment-milestones-box" style="margin-top:16px; padding:12px; background:var(--apple-bg); border-radius:12px;">
+            <div style="font-size:12px; font-weight:700; color:var(--apple-text-secondary); text-transform:uppercase; margin-bottom:8px;">Standard Payment Milestones</div>
+            <div class="milestone-row"><span>10% Booking Advance</span><strong id="milestone-10">₹0</strong></div>
+            <div class="milestone-row"><span>40% Material Procurement</span><strong id="milestone-40-1">₹0</strong></div>
+            <div class="milestone-row"><span>40% On-site Carcass Installation</span><strong id="milestone-40-2">₹0</strong></div>
+            <div class="milestone-row"><span>10% Final Handover & Sign-off</span><strong id="milestone-10-2">₹0</strong></div>
+          </div>
+        </div>
+
+        <!-- BOTTOM STICKY BAR FOR QUICK ACTIONS -->
+        <div class="quote-bottom-bar">
+          <button class="quote-bar-btn btn-wa-quote" id="btn-bottom-quote-wa">
+            💬 Send WhatsApp Proposal
+          </button>
+          <button class="quote-bar-btn btn-print-quote" id="btn-bottom-quote-print">
+            📄 Print / PDF
+          </button>
         </div>
       </section>
 
@@ -692,6 +855,201 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- 1. BOTTOM SHEET: CREATE NEW QUOTE -->
+    <div class="bottom-sheet-overlay" id="sheet-new-quote-overlay">
+      <div class="bottom-sheet" id="sheet-new-quote">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <h3>Create New Quotation</h3>
+          <button class="close-sheet" data-close="sheet-new-quote-overlay">&times;</button>
+        </div>
+
+        <form id="form-new-quote" class="sheet-form">
+          <div class="form-group">
+            <label class="form-label" for="quote-input-client">Client / Owner Name</label>
+            <input type="text" id="quote-input-client" placeholder="e.g. Rajesh Sharma" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="quote-input-phone">WhatsApp / Phone Number</label>
+            <input type="tel" id="quote-input-phone" placeholder="e.g. 9876543210">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="quote-input-project">Project / Property Name</label>
+            <input type="text" id="quote-input-project" placeholder="e.g. 3BHK Aparna Sarovar, Nallagandla" required>
+          </div>
+
+          <button type="submit" class="apple-submit-btn">
+            Start Quotation
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 2. BOTTOM SHEET: ADD ROOM TO QUOTE -->
+    <div class="bottom-sheet-overlay" id="sheet-add-room-overlay">
+      <div class="bottom-sheet" id="sheet-add-room">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <h3>Add Room to Quote</h3>
+          <button class="close-sheet" data-close="sheet-add-room-overlay">&times;</button>
+        </div>
+
+        <div class="sheet-body-scrollable">
+          <div class="room-preset-grid" id="room-presets-container">
+            <button type="button" class="room-preset-btn" data-room-name="Living Room" data-room-icon="🛋️">
+              <span class="icon">🛋️</span>
+              <span class="title">Living Room</span>
+            </button>
+            <button type="button" class="room-preset-btn" data-room-name="Modular Kitchen" data-room-icon="🍳">
+              <span class="icon">🍳</span>
+              <span class="title">Modular Kitchen</span>
+            </button>
+            <button type="button" class="room-preset-btn" data-room-name="Master Bedroom" data-room-icon="🛏️">
+              <span class="icon">🛏️</span>
+              <span class="title">Master Bedroom</span>
+            </button>
+            <button type="button" class="room-preset-btn" data-room-name="Kids Bedroom" data-room-icon="🛏️">
+              <span class="icon">🛏️</span>
+              <span class="title">Kids Bedroom</span>
+            </button>
+            <button type="button" class="room-preset-btn" data-room-name="Guest Bedroom" data-room-icon="🛏️">
+              <span class="icon">🛏️</span>
+              <span class="title">Guest Bedroom</span>
+            </button>
+            <button type="button" class="room-preset-btn" data-room-name="Dining Room" data-room-icon="🍽️">
+              <span class="icon">🍽️</span>
+              <span class="title">Dining Room</span>
+            </button>
+            <button type="button" class="room-preset-btn" data-room-name="Pooja Room" data-room-icon="🪔">
+              <span class="icon">🪔</span>
+              <span class="title">Pooja Room</span>
+            </button>
+            <button type="button" class="room-preset-btn" data-room-name="Balcony / Utility" data-room-icon="🪟">
+              <span class="icon">🪟</span>
+              <span class="title">Balcony / Utility</span>
+            </button>
+          </div>
+
+          <div class="custom-room-divider"><span>OR CUSTOM ROOM</span></div>
+
+          <form id="form-custom-room" class="custom-room-form">
+            <div class="form-group-row">
+              <input type="text" id="custom-room-name-input" placeholder="e.g. Home Theatre, Foyer..." style="flex:1;">
+              <button type="submit" class="apple-btn-primary" style="padding:0 18px; height:48px;">Add</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. BOTTOM SHEET: SELECT ITEM CARDS FOR ROOM -->
+    <div class="bottom-sheet-overlay" id="sheet-select-item-overlay">
+      <div class="bottom-sheet" id="sheet-select-item">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <h3 id="select-item-room-title">Add Item</h3>
+          <button class="close-sheet" data-close="sheet-select-item-overlay">&times;</button>
+        </div>
+
+        <div class="sheet-body-scrollable">
+          <div class="catalog-items-grid" id="catalog-items-container">
+            <!-- Dynamically populated cards for the active room -->
+          </div>
+
+          <button type="button" class="apple-dashed-add-btn" id="btn-trigger-custom-item" style="margin-top:14px;">
+            <span>➕ Add Custom Item</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. BOTTOM SHEET: CONFIGURE ITEM WITH AUTO-CALCULATION & DIMENSION HELPER -->
+    <div class="bottom-sheet-overlay" id="sheet-configure-item-overlay">
+      <div class="bottom-sheet" id="sheet-configure-item">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header" style="border-bottom:none; padding-bottom:4px;">
+          <!-- Active Context Banner -->
+          <div class="item-context-banner" id="item-context-banner">
+            🛋️ Living Room &rsaquo; 📺 TV Unit & Panelling
+          </div>
+          <button class="close-sheet" data-close="sheet-configure-item-overlay">&times;</button>
+        </div>
+
+        <form id="form-configure-item" class="sheet-form" style="padding-top:4px;">
+          <div class="form-group">
+            <label class="form-label" for="cfg-item-name">Item Name</label>
+            <input type="text" id="cfg-item-name" placeholder="Item Name" required>
+          </div>
+
+          <!-- Calculation Mode Switch -->
+          <div class="form-group">
+            <label class="form-label">Calculation Mode</label>
+            <div class="apple-segmented-control" id="cfg-mode-segmented">
+              <button type="button" class="segment active" data-mode="area">Area (SFT &times; Rate)</button>
+              <button type="button" class="segment" data-mode="lumpsum">Direct Lumpsum</button>
+            </div>
+          </div>
+
+          <!-- Area Calculation Group -->
+          <div id="cfg-area-group">
+            <!-- Optional Dimension Helper (Width x Height) -->
+            <div class="form-group dimension-helper-box">
+              <label class="form-label" style="display:flex; justify-content:space-between;">
+                <span>Dimension Helper (Optional)</span>
+                <span style="color:var(--apple-blue); font-weight:600;">Width &times; Height &rarr; SFT</span>
+              </label>
+              <div class="dimension-inputs-row">
+                <input type="number" id="cfg-item-width" placeholder="Width (ft)" step="any" min="0">
+                <span class="dim-multiplier">&times;</span>
+                <input type="number" id="cfg-item-height" placeholder="Height (ft)" step="any" min="0">
+              </div>
+            </div>
+
+            <div class="form-group-row">
+              <div class="form-group" style="flex:1;">
+                <label class="form-label" for="cfg-item-sft">Total Area (SFT)</label>
+                <input type="number" id="cfg-item-sft" placeholder="e.g. 64" step="any" min="0">
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label class="form-label" for="cfg-item-rate">Rate per SFT (₹)</label>
+                <input type="number" id="cfg-item-rate" placeholder="e.g. 1450" step="any" min="0">
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Amount (Auto-Calculated with manual override) -->
+          <div class="form-group">
+            <label class="form-label" for="cfg-item-amount" style="display:flex; justify-content:space-between;">
+              <span>Total Item Amount (₹)</span>
+              <span style="font-size:11px; color:var(--apple-text-secondary);">(Editable anytime)</span>
+            </label>
+            <div class="input-with-symbol">
+              <span class="currency-symbol">₹</span>
+              <input type="text" id="cfg-item-amount" placeholder="0" inputmode="decimal" required>
+            </div>
+            <div class="live-amount-subtext" id="cfg-item-amount-subtext"></div>
+          </div>
+
+          <!-- Notes / Specifications -->
+          <div class="form-group">
+            <label class="form-label" for="cfg-item-notes">Material Specs / Notes (Optional)</label>
+            <input type="text" id="cfg-item-notes" placeholder="e.g. Century Ply 710 + 1mm Merino laminate">
+          </div>
+
+          <button type="submit" class="apple-submit-btn" id="btn-save-configured-item">
+            Save Item to Room
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 5. STANDALONE PRINTABLE / PDF QUOTATION CONTAINER -->
+    <div id="print-quotation-view" class="print-quotation-area">
+      <!-- Populated dynamically when window.print() is invoked -->
     </div>
 
   </div>

@@ -121,6 +121,24 @@ async function initPostgresSchema() {
       );
     `);
 
+    // Create quotes table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS quotes (
+        id VARCHAR(255) PRIMARY KEY,
+        client_name VARCHAR(255) NOT NULL,
+        client_phone VARCHAR(50),
+        project_name VARCHAR(255) NOT NULL,
+        rooms JSONB NOT NULL DEFAULT '[]'::jsonb,
+        gross_amount NUMERIC DEFAULT 0,
+        discount_amount NUMERIC DEFAULT 0,
+        tax_percent NUMERIC DEFAULT 0,
+        net_amount NUMERIC DEFAULT 0,
+        status VARCHAR(50) DEFAULT 'draft',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // Purge dummy seed records if any exist
     await client.query(`
       DELETE FROM transactions WHERE id IN ('tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106') OR project_id IN ('proj-1', 'proj-2', 'proj-3');
@@ -136,7 +154,7 @@ async function initPostgresSchema() {
 // FILE FALLBACK HELPERS
 function readJsonDB() {
   if (!fs.existsSync(DB_FILE)) {
-    const emptyData = { projects: [], transactions: [], subscriptions: [], leads: [], tasks: [] };
+    const emptyData = { projects: [], transactions: [], subscriptions: [], leads: [], tasks: [], quotes: [] };
     writeJsonDB(emptyData);
     return emptyData;
   }
@@ -149,10 +167,11 @@ function readJsonDB() {
       transactions: cleanTransactions,
       subscriptions: json.subscriptions || [],
       leads: json.leads || [],
-      tasks: json.tasks || []
+      tasks: json.tasks || [],
+      quotes: json.quotes || []
     };
   } catch (e) {
-    return { projects: [], transactions: [], subscriptions: [], leads: [], tasks: [] };
+    return { projects: [], transactions: [], subscriptions: [], leads: [], tasks: [], quotes: [] };
   }
 }
 
@@ -215,7 +234,7 @@ app.post('/api/test-push', async (req, res) => {
   });
 });
 
-// 1. GET ALL CLOUD DATA (Projects, Transactions, Leads & Tasks)
+// 1. GET ALL CLOUD DATA (Projects, Transactions, Leads, Tasks & Quotes)
 app.get('/api/data', async (req, res) => {
   if (usePostgres && pool) {
     try {
@@ -223,20 +242,29 @@ app.get('/api/data', async (req, res) => {
       const txRes = await pool.query('SELECT id, project_id as "projectId", type, amount, category, mode, note, date FROM transactions ORDER BY date DESC');
       const leadsRes = await pool.query('SELECT id, name, phone, followup_date as "followupDate", notes, status, notified, created_at as "createdAt" FROM potential_clients ORDER BY followup_date ASC');
       const tasksRes = await pool.query('SELECT id, title, notes, due_date as "dueDate", priority, project_id as "projectId", completed, notified, created_at as "createdAt" FROM tasks ORDER BY due_date ASC');
+      const quotesRes = await pool.query('SELECT id, client_name as "clientName", client_phone as "clientPhone", project_name as "projectName", rooms, gross_amount as "grossAmount", discount_amount as "discountAmount", tax_percent as "taxPercent", net_amount as "netAmount", status, created_at as "createdAt", updated_at as "updatedAt" FROM quotes ORDER BY updated_at DESC');
 
       const projects = projRes.rows.map(r => ({ ...r, budget: Number(r.budget) }));
       const transactions = txRes.rows.map(r => ({ ...r, amount: Number(r.amount) }));
       const leads = leadsRes.rows;
       const tasks = tasksRes.rows;
+      const quotes = quotesRes.rows.map(q => ({
+        ...q,
+        rooms: typeof q.rooms === 'string' ? JSON.parse(q.rooms) : (q.rooms || []),
+        grossAmount: Number(q.grossAmount || 0),
+        discountAmount: Number(q.discountAmount || 0),
+        taxPercent: Number(q.taxPercent || 0),
+        netAmount: Number(q.netAmount || 0)
+      }));
 
-      return res.json({ success: true, dbType: 'PostgreSQL', projects, transactions, leads, tasks });
+      return res.json({ success: true, dbType: 'PostgreSQL', projects, transactions, leads, tasks, quotes });
     } catch (err) {
       console.error('PostgreSQL query error, using JSON fallback:', err);
     }
   }
 
   const jsonDB = readJsonDB();
-  res.json({ success: true, dbType: 'JSON_File', projects: jsonDB.projects, transactions: jsonDB.transactions, leads: jsonDB.leads, tasks: jsonDB.tasks });
+  res.json({ success: true, dbType: 'JSON_File', projects: jsonDB.projects, transactions: jsonDB.transactions, leads: jsonDB.leads, tasks: jsonDB.tasks, quotes: jsonDB.quotes || [] });
 });
 
 // 2. POTENTIAL CLIENTS (LEADS) ENDPOINTS
@@ -576,6 +604,136 @@ app.delete('/api/tasks/:id', async (req, res) => {
   jsonDB.tasks = (jsonDB.tasks || []).filter(t => t.id !== taskId);
   writeJsonDB(jsonDB);
   res.json({ success: true, dbType: 'JSON_File', tasks: jsonDB.tasks });
+});
+
+// 9. QUOTATIONS REST ENDPOINTS
+app.post('/api/quotes', async (req, res) => {
+  const newQuote = req.body;
+  if (!newQuote || !newQuote.clientName || !newQuote.projectName) {
+    return res.status(400).json({ success: false, error: 'Client name and project name required' });
+  }
+
+  const quoteId = newQuote.id || ('quote-' + Date.now());
+  const clientName = newQuote.clientName;
+  const clientPhone = newQuote.clientPhone || '';
+  const projectName = newQuote.projectName;
+  const roomsJson = JSON.stringify(newQuote.rooms || []);
+  const grossAmount = Number(newQuote.grossAmount || 0);
+  const discountAmount = Number(newQuote.discountAmount || 0);
+  const taxPercent = Number(newQuote.taxPercent || 0);
+  const netAmount = Number(newQuote.netAmount || 0);
+  const status = newQuote.status || 'draft';
+  const nowISO = new Date().toISOString();
+
+  if (usePostgres && pool) {
+    try {
+      await pool.query(
+        `INSERT INTO quotes (id, client_name, client_phone, project_name, rooms, gross_amount, discount_amount, tax_percent, net_amount, status, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+        [quoteId, clientName, clientPhone, projectName, roomsJson, grossAmount, discountAmount, taxPercent, netAmount, status, nowISO, nowISO]
+      );
+      const quotesRes = await pool.query('SELECT id, client_name as "clientName", client_phone as "clientPhone", project_name as "projectName", rooms, gross_amount as "grossAmount", discount_amount as "discountAmount", tax_percent as "taxPercent", net_amount as "netAmount", status, created_at as "createdAt", updated_at as "updatedAt" FROM quotes ORDER BY updated_at DESC');
+      const quotes = quotesRes.rows.map(q => ({
+        ...q,
+        rooms: typeof q.rooms === 'string' ? JSON.parse(q.rooms) : (q.rooms || []),
+        grossAmount: Number(q.grossAmount || 0),
+        discountAmount: Number(q.discountAmount || 0),
+        taxPercent: Number(q.taxPercent || 0),
+        netAmount: Number(q.netAmount || 0)
+      }));
+      return res.json({ success: true, dbType: 'PostgreSQL', quote: { ...newQuote, id: quoteId }, quotes });
+    } catch (err) {
+      console.error('PostgreSQL quote insert error:', err);
+    }
+  }
+
+  const jsonDB = readJsonDB();
+  jsonDB.quotes = jsonDB.quotes || [];
+  const fullQuote = { ...newQuote, id: quoteId, createdAt: nowISO, updatedAt: nowISO };
+  jsonDB.quotes.unshift(fullQuote);
+  writeJsonDB(jsonDB);
+  res.json({ success: true, dbType: 'JSON_File', quote: fullQuote, quotes: jsonDB.quotes });
+});
+
+app.put('/api/quotes/:id', async (req, res) => {
+  const quoteId = req.params.id;
+  const updated = req.body;
+
+  if (!quoteId || !updated) {
+    return res.status(400).json({ success: false, error: 'Invalid quote update payload' });
+  }
+
+  const clientName = updated.clientName;
+  const clientPhone = updated.clientPhone || '';
+  const projectName = updated.projectName;
+  const roomsJson = JSON.stringify(updated.rooms || []);
+  const grossAmount = Number(updated.grossAmount || 0);
+  const discountAmount = Number(updated.discountAmount || 0);
+  const taxPercent = Number(updated.taxPercent || 0);
+  const netAmount = Number(updated.netAmount || 0);
+  const status = updated.status || 'draft';
+  const nowISO = new Date().toISOString();
+
+  if (usePostgres && pool) {
+    try {
+      await pool.query(
+        `UPDATE quotes SET 
+          client_name = $1, client_phone = $2, project_name = $3, rooms = $4,
+          gross_amount = $5, discount_amount = $6, tax_percent = $7, net_amount = $8,
+          status = $9, updated_at = $10
+         WHERE id = $11`,
+        [clientName, clientPhone, projectName, roomsJson, grossAmount, discountAmount, taxPercent, netAmount, status, nowISO, quoteId]
+      );
+      const quotesRes = await pool.query('SELECT id, client_name as "clientName", client_phone as "clientPhone", project_name as "projectName", rooms, gross_amount as "grossAmount", discount_amount as "discountAmount", tax_percent as "taxPercent", net_amount as "netAmount", status, created_at as "createdAt", updated_at as "updatedAt" FROM quotes ORDER BY updated_at DESC');
+      const quotes = quotesRes.rows.map(q => ({
+        ...q,
+        rooms: typeof q.rooms === 'string' ? JSON.parse(q.rooms) : (q.rooms || []),
+        grossAmount: Number(q.grossAmount || 0),
+        discountAmount: Number(q.discountAmount || 0),
+        taxPercent: Number(q.taxPercent || 0),
+        netAmount: Number(q.netAmount || 0)
+      }));
+      return res.json({ success: true, dbType: 'PostgreSQL', quotes });
+    } catch (err) {
+      console.error('Error updating quote in PostgreSQL:', err);
+    }
+  }
+
+  const jsonDB = readJsonDB();
+  const index = (jsonDB.quotes || []).findIndex(q => q.id === quoteId);
+  if (index !== -1) {
+    jsonDB.quotes[index] = { ...jsonDB.quotes[index], ...updated, updatedAt: nowISO };
+    writeJsonDB(jsonDB);
+  }
+  res.json({ success: true, dbType: 'JSON_File', quotes: jsonDB.quotes || [] });
+});
+
+app.delete('/api/quotes/:id', async (req, res) => {
+  const quoteId = req.params.id;
+  if (!quoteId) return res.status(400).json({ success: false, error: 'Quote ID required' });
+
+  if (usePostgres && pool) {
+    try {
+      await pool.query('DELETE FROM quotes WHERE id = $1', [quoteId]);
+      const quotesRes = await pool.query('SELECT id, client_name as "clientName", client_phone as "clientPhone", project_name as "projectName", rooms, gross_amount as "grossAmount", discount_amount as "discountAmount", tax_percent as "taxPercent", net_amount as "netAmount", status, created_at as "createdAt", updated_at as "updatedAt" FROM quotes ORDER BY updated_at DESC');
+      const quotes = quotesRes.rows.map(q => ({
+        ...q,
+        rooms: typeof q.rooms === 'string' ? JSON.parse(q.rooms) : (q.rooms || []),
+        grossAmount: Number(q.grossAmount || 0),
+        discountAmount: Number(q.discountAmount || 0),
+        taxPercent: Number(q.taxPercent || 0),
+        netAmount: Number(q.netAmount || 0)
+      }));
+      return res.json({ success: true, dbType: 'PostgreSQL', quotes });
+    } catch (err) {
+      console.error('Error deleting quote from PostgreSQL:', err);
+    }
+  }
+
+  const jsonDB = readJsonDB();
+  jsonDB.quotes = (jsonDB.quotes || []).filter(q => q.id !== quoteId);
+  writeJsonDB(jsonDB);
+  res.json({ success: true, dbType: 'JSON_File', quotes: jsonDB.quotes });
 });
 
 // TASK REMINDER TICKER (<2 MB RAM in-process loop)

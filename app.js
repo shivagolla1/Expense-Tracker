@@ -10,8 +10,88 @@
     TRANSACTIONS: 'aakruthee_transactions_prod_v3',
     LEADS: 'aakruthee_leads_prod_v1',
     TASKS: 'aakruthee_tasks_prod_v1',
+    QUOTES: 'aakruthee_quotes_prod_v1',
     PASSKEY_CRED_ID: 'aakruthee_passkey_cred_id_prod_v3',
     NOTIF_ONBOARDED: 'aakruthee_notif_onboarded_v1'
+  };
+
+  const ROOM_CATALOG = {
+    'Living Room': {
+      icon: '🛋️',
+      items: [
+        { name: 'TV Unit & Wall Panelling', rate: 1450, unit: 'sft', notes: 'HDHMR with 1mm Merino laminate + louvers' },
+        { name: 'Gypsum False Ceiling', rate: 130, unit: 'sft', notes: 'Saint-Gobain gypsum + cove lighting provision' },
+        { name: 'Wall Panelling / Louvers', rate: 950, unit: 'sft', notes: 'Charcoal / wooden fluted louvers' },
+        { name: 'Foyer Shoe Console', rate: 1200, unit: 'sft', notes: 'Cushioned seating + footwear storage' },
+        { name: 'CNC Jali Partition', rate: 1800, unit: 'sft', notes: 'MDF / PVC CNC with PU finish frame' },
+        { name: 'Bay Window Seating', rate: 1100, unit: 'sft', notes: 'Storage bench with top cushioning' }
+      ]
+    },
+    'Modular Kitchen': {
+      icon: '🍳',
+      items: [
+        { name: 'BWP Marine Base Cabinets', rate: 1750, unit: 'sft', notes: '710 BWP Marine ply + acrylic / laminate shutters' },
+        { name: 'Wall Overhead Cabinets', rate: 1400, unit: 'sft', notes: 'Soft-close lift up / glass shutters' },
+        { name: 'Full Height Lofts', rate: 950, unit: 'sft', notes: 'Storage lofts up to ceiling' },
+        { name: 'Tall Pantry / Microwave Unit', rate: 1600, unit: 'sft', notes: 'In-built appliance and pantry storage' },
+        { name: 'Quartz / Granite Countertop', rate: 450, unit: 'sft', notes: 'Supply & edge moulding fixing' },
+        { name: 'Cutlery & Tandem Baskets', rate: 28000, unit: 'lumpsum', notes: 'Hafele / Hettich soft-close drawer kits' },
+        { name: 'Breakfast Counter', rate: 1500, unit: 'sft', notes: 'Island / ledge breakfast counter with support' }
+      ]
+    },
+    'Master Bedroom': {
+      icon: '🛏️',
+      items: [
+        { name: '3-Door Sliding Wardrobe', rate: 1650, unit: 'sft', notes: 'Anti-bend sliding hardware + lofts' },
+        { name: 'Hinged Wardrobe with Lofts', rate: 1400, unit: 'sft', notes: 'Soft-close hinges + handles' },
+        { name: 'King Bed with Storage & Headboard', rate: 55000, unit: 'lumpsum', notes: 'Hydraulic lift storage + upholstered headboard' },
+        { name: 'Dresser Unit with Full Mirror', rate: 18000, unit: 'lumpsum', notes: 'Drawer console + profile LED mirror' },
+        { name: 'Study Desk & Overhead Storage', rate: 1250, unit: 'sft', notes: 'Computer desk + floating wall shelves' },
+        { name: 'False Ceiling & Spotlights', rate: 130, unit: 'sft', notes: 'Gypsum ceiling design' }
+      ]
+    },
+    'Kids Bedroom': {
+      icon: '🛏️',
+      items: [
+        { name: 'Wardrobe with Study Desk', rate: 1450, unit: 'sft', notes: 'Combined storage and study unit' },
+        { name: 'Single / Bunk Bed with Storage', rate: 38000, unit: 'lumpsum', notes: 'Safety rails + lower storage drawers' },
+        { name: 'Bookshelf & Toy Display Unit', rate: 1100, unit: 'sft', notes: 'Open & closed colorful laminate cubbies' },
+        { name: 'False Ceiling', rate: 130, unit: 'sft', notes: 'Theme lighting ceiling' }
+      ]
+    },
+    'Guest Bedroom': {
+      icon: '🛏️',
+      items: [
+        { name: 'Hinged Wardrobe with Lofts', rate: 1350, unit: 'sft', notes: 'MR grade ply + 1mm laminate' },
+        { name: 'Queen Bed with Storage', rate: 42000, unit: 'lumpsum', notes: 'Box storage + headboard' },
+        { name: 'Bedside Tables (Pair)', rate: 12000, unit: 'lumpsum', notes: 'Dual drawer units' },
+        { name: 'Dresser Unit', rate: 14000, unit: 'lumpsum', notes: 'Mirror + storage shelf' }
+      ]
+    },
+    'Dining Room': {
+      icon: '🍽️',
+      items: [
+        { name: 'Crockery Unit with Glass Shutters', rate: 1550, unit: 'sft', notes: 'Fluted glass / profile shutters + LED strips' },
+        { name: 'Handwash Basin Vanity & Panelling', rate: 22000, unit: 'lumpsum', notes: 'Storage cabinet + stone counter + mirror' },
+        { name: 'Dining Wall Panelling', rate: 950, unit: 'sft', notes: 'Decorative acoustic / wooden panelling' }
+      ]
+    },
+    'Pooja Room': {
+      icon: '🪔',
+      items: [
+        { name: 'CNC Mandir Unit with Brass Bells', rate: 45000, unit: 'lumpsum', notes: 'Teak finish / Corian mandir unit' },
+        { name: 'Pooja Storage Drawers', rate: 1200, unit: 'sft', notes: 'Prasad & pooja accessories drawers' },
+        { name: 'Backlit Panel / Om CNC', rate: 1400, unit: 'sft', notes: 'Warm white LED backlit panel' }
+      ]
+    },
+    'Balcony / Utility': {
+      icon: '🪟',
+      items: [
+        { name: 'Washing Machine Utility Cabinet', rate: 1300, unit: 'sft', notes: 'Waterproof ply storage unit' },
+        { name: 'Vertical Garden / Wall Cladding', rate: 850, unit: 'sft', notes: 'WPC exterior louvers' },
+        { name: 'Balcony Deck Tiles', rate: 280, unit: 'sft', notes: 'Outdoor weather-resistant tiles' }
+      ]
+    }
   };
 
   class AakrutheeApp {
@@ -21,9 +101,15 @@
       this.transactions = [];
       this.leads = [];
       this.tasks = [];
+      this.quotes = [];
       
       this.activeTab = 'view-quick-entry';
       this.activeProjectId = null;
+      this.activeQuoteId = null;
+      this.activeRoomIdForItems = null;
+      this.editingItemId = null;
+      this.itemCalcMode = 'area'; // 'area' | 'lumpsum'
+
       this.activityFilter = 'all';
       this.isUnlocked = false;
 
@@ -332,6 +418,8 @@
       setupLiveFormatting('inflow-amount', 'inflow-amount-subtext');
       setupLiveFormatting('outflow-amount', 'outflow-amount-subtext');
       setupLiveFormatting('proj-budget', 'proj-budget-subtext');
+      setupLiveFormatting('cfg-item-amount', 'cfg-item-amount-subtext');
+      setupLiveFormatting('quote-discount-input', null);
     }
 
     cleanupPreviousMonthCompletedTasks() {
@@ -363,6 +451,7 @@
             this.transactions = (data.transactions || []).filter(t => !['tx-101', 'tx-102', 'tx-103', 'tx-104', 'tx-105', 'tx-106'].includes(t.id) && !['proj-1', 'proj-2', 'proj-3'].includes(t.projectId));
             this.leads = data.leads || [];
             this.tasks = data.tasks || [];
+            this.quotes = data.quotes || [];
             this.cleanupPreviousMonthCompletedTasks();
             this.saveLocalCache();
             this.render();
@@ -382,18 +471,21 @@
       const storedTx = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
       const storedLeads = localStorage.getItem(STORAGE_KEYS.LEADS);
       const storedTasks = localStorage.getItem(STORAGE_KEYS.TASKS);
+      const storedQuotes = localStorage.getItem(STORAGE_KEYS.QUOTES);
 
       try {
         this.projects = storedProj ? (JSON.parse(storedProj) || []) : [];
         this.transactions = storedTx ? (JSON.parse(storedTx) || []) : [];
         this.leads = storedLeads ? (JSON.parse(storedLeads) || []) : [];
         this.tasks = storedTasks ? (JSON.parse(storedTasks) || []) : [];
+        this.quotes = storedQuotes ? (JSON.parse(storedQuotes) || []) : [];
         this.cleanupPreviousMonthCompletedTasks();
       } catch (e) {
         this.projects = [];
         this.transactions = [];
         this.leads = [];
         this.tasks = [];
+        this.quotes = [];
       }
     }
 
@@ -402,6 +494,7 @@
       localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(this.transactions));
       localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify(this.leads));
       localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(this.tasks));
+      localStorage.setItem(STORAGE_KEYS.QUOTES, JSON.stringify(this.quotes));
     }
 
     async saveLeadToCloud(newLead) {
@@ -773,6 +866,61 @@
       this.taskProjectIdSelect = document.getElementById('task-project-id');
       this.navItemLeads = document.getElementById('nav-item-leads');
       this.navItemTasks = document.getElementById('nav-item-tasks');
+
+      // Quotation Builder Elements
+      this.heroBtnQuotes = document.getElementById('hero-btn-quotes');
+      this.viewQuotesHub = document.getElementById('view-quotes-hub');
+      this.btnBackFromQuotes = document.getElementById('btn-back-from-quotes');
+      this.btnCreateQuoteTop = document.getElementById('btn-create-quote-top');
+      this.quotesListContainer = document.getElementById('quotes-list-container');
+      this.viewQuoteDetail = document.getElementById('view-quote-detail');
+      this.btnBackToQuotesHub = document.getElementById('btn-back-to-quotes-hub');
+      this.btnQuoteWhatsapp = document.getElementById('btn-quote-whatsapp');
+      this.btnQuotePrint = document.getElementById('btn-quote-print');
+      this.btnDeleteQuote = document.getElementById('btn-delete-quote');
+      this.quoteClientHeading = document.getElementById('quote-client-heading');
+      this.quoteProjectSub = document.getElementById('quote-project-sub');
+      this.quoteStatusPill = document.getElementById('quote-status-pill');
+      this.quoteNetTotalDisplay = document.getElementById('quote-net-total-display');
+      this.quoteAmountWords = document.getElementById('quote-amount-words');
+      this.quoteGrossDisplay = document.getElementById('quote-gross-display');
+      this.quoteDiscountDisplay = document.getElementById('quote-discount-display');
+      this.quoteRoomsCount = document.getElementById('quote-rooms-count');
+      this.quoteRoomsContainer = document.getElementById('quote-rooms-container');
+      this.btnAddRoomTrigger = document.getElementById('btn-add-room-trigger');
+      this.btnAddRoomBottom = document.getElementById('btn-add-room-bottom');
+      this.quoteDiscountInput = document.getElementById('quote-discount-input');
+      this.quoteGstToggle = document.getElementById('quote-gst-toggle');
+      this.milestone10 = document.getElementById('milestone-10');
+      this.milestone401 = document.getElementById('milestone-40-1');
+      this.milestone402 = document.getElementById('milestone-40-2');
+      this.milestone102 = document.getElementById('milestone-10-2');
+      this.btnBottomQuoteWa = document.getElementById('btn-bottom-quote-wa');
+      this.btnBottomQuotePrint = document.getElementById('btn-bottom-quote-print');
+      this.sheetNewQuoteOverlay = document.getElementById('sheet-new-quote-overlay');
+      this.formNewQuote = document.getElementById('form-new-quote');
+      this.sheetAddRoomOverlay = document.getElementById('sheet-add-room-overlay');
+      this.roomPresetsContainer = document.getElementById('room-presets-container');
+      this.formCustomRoom = document.getElementById('form-custom-room');
+      this.customRoomNameInput = document.getElementById('custom-room-name-input');
+      this.sheetSelectItemOverlay = document.getElementById('sheet-select-item-overlay');
+      this.selectItemRoomTitle = document.getElementById('select-item-room-title');
+      this.catalogItemsContainer = document.getElementById('catalog-items-container');
+      this.btnTriggerCustomItem = document.getElementById('btn-trigger-custom-item');
+      this.sheetConfigureItemOverlay = document.getElementById('sheet-configure-item-overlay');
+      this.itemContextBanner = document.getElementById('item-context-banner');
+      this.formConfigureItem = document.getElementById('form-configure-item');
+      this.cfgModeSegmented = document.getElementById('cfg-mode-segmented');
+      this.cfgAreaGroup = document.getElementById('cfg-area-group');
+      this.cfgItemName = document.getElementById('cfg-item-name');
+      this.cfgItemWidth = document.getElementById('cfg-item-width');
+      this.cfgItemHeight = document.getElementById('cfg-item-height');
+      this.cfgItemSft = document.getElementById('cfg-item-sft');
+      this.cfgItemRate = document.getElementById('cfg-item-rate');
+      this.cfgItemAmount = document.getElementById('cfg-item-amount');
+      this.cfgItemAmountSubtext = document.getElementById('cfg-item-amount-subtext');
+      this.cfgItemNotes = document.getElementById('cfg-item-notes');
+      this.printQuotationView = document.getElementById('print-quotation-view');
     }
 
     bindEvents() {
@@ -992,9 +1140,189 @@
         }
       });
 
+      // Quotation Builder Events
+      if (this.heroBtnQuotes) {
+        this.heroBtnQuotes.addEventListener('click', () => this.openQuotesHub());
+      }
+      if (this.btnBackFromQuotes) {
+        this.btnBackFromQuotes.addEventListener('click', () => this.switchTab('view-quick-entry'));
+      }
+      if (this.btnBackToQuotesHub) {
+        this.btnBackToQuotesHub.addEventListener('click', () => this.openQuotesHub());
+      }
+      if (this.btnCreateQuoteTop) {
+        this.btnCreateQuoteTop.addEventListener('click', () => {
+          if (this.formNewQuote) this.formNewQuote.reset();
+          this.openSheet(this.sheetNewQuoteOverlay);
+        });
+      }
+      if (this.formNewQuote) {
+        this.formNewQuote.addEventListener('submit', (e) => this.handleNewQuoteSubmit(e));
+      }
+      if (this.btnAddRoomTrigger) {
+        this.btnAddRoomTrigger.addEventListener('click', () => this.openSheet(this.sheetAddRoomOverlay));
+      }
+      if (this.btnAddRoomBottom) {
+        this.btnAddRoomBottom.addEventListener('click', () => this.openSheet(this.sheetAddRoomOverlay));
+      }
+      if (this.roomPresetsContainer) {
+        this.roomPresetsContainer.addEventListener('click', (e) => {
+          const card = e.target.closest('.room-preset-card');
+          if (card) {
+            const name = card.getAttribute('data-room-name');
+            const icon = card.getAttribute('data-room-icon');
+            this.addRoomToActiveQuote(name, icon);
+            this.closeSheet(this.sheetAddRoomOverlay);
+          }
+        });
+      }
+      if (this.formCustomRoom) {
+        this.formCustomRoom.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const name = this.customRoomNameInput ? this.customRoomNameInput.value.trim() : '';
+          if (!name) return;
+          this.addRoomToActiveQuote(name, '🏠');
+          if (this.customRoomNameInput) this.customRoomNameInput.value = '';
+          this.closeSheet(this.sheetAddRoomOverlay);
+        });
+      }
+      if (this.btnTriggerCustomItem) {
+        this.btnTriggerCustomItem.addEventListener('click', () => {
+          this.closeSheet(this.sheetSelectItemOverlay);
+          this.openConfigureItemSheet(this.activeRoomIdForItems, null, null);
+        });
+      }
+      if (this.catalogItemsContainer) {
+        this.catalogItemsContainer.addEventListener('click', (e) => {
+          const card = e.target.closest('.catalog-item-card');
+          if (card) {
+            const idx = parseInt(card.getAttribute('data-preset-idx'), 10);
+            const activeQuote = this.quotes.find(q => q.id === this.activeQuoteId);
+            const activeRoom = activeQuote ? activeQuote.rooms.find(r => r.id === this.activeRoomIdForItems) : null;
+            const catalog = activeRoom && ROOM_CATALOG[activeRoom.name] ? ROOM_CATALOG[activeRoom.name].items : this.getFallbackCatalogItems();
+            const preset = catalog[idx];
+            if (preset) {
+              this.closeSheet(this.sheetSelectItemOverlay);
+              this.openConfigureItemSheet(this.activeRoomIdForItems, preset, null);
+            }
+          }
+        });
+      }
+      if (this.cfgModeSegmented) {
+        this.cfgModeSegmented.addEventListener('click', (e) => {
+          const seg = e.target.closest('.segment');
+          if (seg) {
+            const mode = seg.getAttribute('data-mode');
+            this.setItemCalculationMode(mode);
+          }
+        });
+      }
+
+      // Live calculation on Dimension inputs (Width, Height), SFT, Rate
+      const triggerRecalc = () => this.recalcConfiguredItemAmount();
+      if (this.cfgItemWidth) this.cfgItemWidth.addEventListener('input', triggerRecalc);
+      if (this.cfgItemHeight) this.cfgItemHeight.addEventListener('input', triggerRecalc);
+      if (this.cfgItemSft) this.cfgItemSft.addEventListener('input', triggerRecalc);
+      if (this.cfgItemRate) this.cfgItemRate.addEventListener('input', triggerRecalc);
+      if (this.cfgItemAmount) {
+        this.cfgItemAmount.addEventListener('input', () => {
+          const val = this.parseAmount(this.cfgItemAmount.value);
+          if (this.cfgItemAmountSubtext) {
+            this.cfgItemAmountSubtext.textContent = val > 0 ? this.numberToWordsIndian(val) : '';
+          }
+        });
+      }
+      if (this.formConfigureItem) {
+        this.formConfigureItem.addEventListener('submit', (e) => this.saveConfiguredItem(e));
+      }
+      if (this.quoteDiscountInput) {
+        this.quoteDiscountInput.addEventListener('input', () => {
+          const quote = this.quotes.find(q => q.id === this.activeQuoteId);
+          if (quote) {
+            quote.discountAmount = this.parseAmount(this.quoteDiscountInput.value);
+            this.recalculateQuoteTotals(quote);
+            this.saveQuoteToCloud(quote, true);
+            this.updateQuoteCommercialsDisplay(quote);
+          }
+        });
+      }
+      if (this.quoteGstToggle) {
+        this.quoteGstToggle.addEventListener('change', () => {
+          const quote = this.quotes.find(q => q.id === this.activeQuoteId);
+          if (quote) {
+            quote.taxPercent = this.quoteGstToggle.checked ? 18 : 0;
+            this.recalculateQuoteTotals(quote);
+            this.saveQuoteToCloud(quote, true);
+            this.updateQuoteCommercialsDisplay(quote);
+          }
+        });
+      }
+      if (this.btnQuoteWhatsapp) {
+        this.btnQuoteWhatsapp.addEventListener('click', () => this.sendQuoteViaWhatsApp(this.activeQuoteId));
+      }
+      if (this.btnBottomQuoteWa) {
+        this.btnBottomQuoteWa.addEventListener('click', () => this.sendQuoteViaWhatsApp(this.activeQuoteId));
+      }
+      if (this.btnQuotePrint) {
+        this.btnQuotePrint.addEventListener('click', () => this.printQuote(this.activeQuoteId));
+      }
+      if (this.btnBottomQuotePrint) {
+        this.btnBottomQuotePrint.addEventListener('click', () => this.printQuote(this.activeQuoteId));
+      }
+      if (this.btnDeleteQuote) {
+        this.btnDeleteQuote.addEventListener('click', () => this.deleteQuoteFromCloud(this.activeQuoteId));
+      }
+
+      // Rooms container item action delegation
+      if (this.quoteRoomsContainer) {
+        this.quoteRoomsContainer.addEventListener('click', (e) => {
+          const addBtn = e.target.closest('.room-card-add-btn');
+          if (addBtn) {
+            const roomId = addBtn.getAttribute('data-room-id');
+            this.openSelectItemSheet(roomId);
+            return;
+          }
+          const delRoomBtn = e.target.closest('.room-delete-btn');
+          if (delRoomBtn) {
+            const roomId = delRoomBtn.getAttribute('data-room-id');
+            this.deleteRoomFromActiveQuote(roomId);
+            return;
+          }
+          const editItemBtn = e.target.closest('.btn-item-edit');
+          if (editItemBtn) {
+            const roomId = editItemBtn.getAttribute('data-room-id');
+            const itemId = editItemBtn.getAttribute('data-item-id');
+            this.editItemInRoom(roomId, itemId);
+            return;
+          }
+          const delItemBtn = e.target.closest('.btn-item-delete');
+          if (delItemBtn) {
+            const roomId = delItemBtn.getAttribute('data-room-id');
+            const itemId = delItemBtn.getAttribute('data-item-id');
+            this.deleteItemFromRoom(roomId, itemId);
+            return;
+          }
+        });
+      }
+
+      // Quotes list delegation
+      if (this.quotesListContainer) {
+        this.quotesListContainer.addEventListener('click', (e) => {
+          const card = e.target.closest('.quote-list-card');
+          if (card) {
+            const qId = card.getAttribute('data-quote-id');
+            this.openQuoteDetail(qId);
+          }
+        });
+      }
+
       window.addEventListener('popstate', () => {
         if (this.activeTab === 'view-project-detail') {
           this.switchTab('view-dashboard');
+        } else if (this.activeTab === 'view-quote-detail') {
+          this.openQuotesHub();
+        } else if (this.activeTab === 'view-quotes-hub') {
+          this.switchTab('view-quick-entry');
         }
       });
     }
@@ -1370,6 +1698,12 @@
 
       if (this.activeTab === 'view-project-detail' && this.activeProjectId) {
         this.renderFullProjectView(this.activeProjectId);
+      }
+      if (this.activeTab === 'view-quotes-hub') {
+        this.renderQuotesHub();
+      }
+      if (this.activeTab === 'view-quote-detail' && this.activeQuoteId) {
+        this.renderQuoteDetail(this.activeQuoteId);
       }
     }
 
@@ -2109,6 +2443,876 @@
         () => window.open(`https://wa.me/?text=${welcomeMsg}`, '_blank'),
         'success'
       );
+    }
+
+    // ==========================================================================
+    // QUOTATION & ROOM-BY-ROOM ESTIMATION METHODS
+    // ==========================================================================
+
+    numberToWordsIndian(num) {
+      if (!num || num <= 0) return 'Zero Rupees';
+      num = Math.round(num);
+
+      const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+        'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+      const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+      const convertLessThanThousand = (n) => {
+        let str = '';
+        if (n >= 100) {
+          str += a[Math.floor(n / 100)] + ' Hundred ';
+          n %= 100;
+        }
+        if (n >= 20) {
+          str += b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
+        } else if (n > 0) {
+          str += a[n];
+        }
+        return str.trim();
+      };
+
+      let words = '';
+      const crore = Math.floor(num / 10000000);
+      num %= 10000000;
+      const lakh = Math.floor(num / 100000);
+      num %= 100000;
+      const thousand = Math.floor(num / 1000);
+      num %= 1000;
+      const remainder = num;
+
+      if (crore > 0) {
+        words += convertLessThanThousand(crore) + ' Crore ';
+      }
+      if (lakh > 0) {
+        words += convertLessThanThousand(lakh) + ' Lakh ';
+      }
+      if (thousand > 0) {
+        words += convertLessThanThousand(thousand) + ' Thousand ';
+      }
+      if (remainder > 0) {
+        words += convertLessThanThousand(remainder);
+      }
+
+      return (words.trim() || 'Zero') + ' Rupees';
+    }
+
+    getFallbackCatalogItems() {
+      return [
+        { name: 'Full Height Wardrobe', rate: 1450, unit: 'sft', notes: 'MR Ply + 1mm Merino laminate' },
+        { name: 'Gypsum False Ceiling', rate: 130, unit: 'sft', notes: 'Saint-Gobain with cove light provision' },
+        { name: 'Wall Panelling / Louvers', rate: 950, unit: 'sft', notes: 'Fluted wooden / charcoal louvers' },
+        { name: 'Storage Cabinet Unit', rate: 1200, unit: 'sft', notes: 'Soft-close shutters + interior shelving' },
+        { name: 'Desk / Countertop Unit', rate: 1500, unit: 'sft', notes: 'Wooden top with support brackets' },
+        { name: 'Electrical & Profile LED Lighting', rate: 18000, unit: 'lumpsum', notes: 'Concealed wiring, drivers and LED strips' }
+      ];
+    }
+
+    openQuotesHub() {
+      this.switchTab('view-quotes-hub');
+      this.renderQuotesHub();
+      if (!history.state || history.state.view !== 'quotes-hub') {
+        history.pushState({ view: 'quotes-hub' }, '');
+      }
+    }
+
+    openQuoteDetail(quoteId) {
+      const quote = this.quotes.find(q => q.id === quoteId);
+      if (!quote) return;
+      this.activeQuoteId = quoteId;
+      this.switchTab('view-quote-detail');
+      this.renderQuoteDetail(quoteId);
+      if (!history.state || history.state.view !== 'quote-detail' || history.state.id !== quoteId) {
+        history.pushState({ view: 'quote-detail', id: quoteId }, '');
+      }
+    }
+
+    renderQuotesHub() {
+      if (!this.quotesListContainer) return;
+      this.quotesListContainer.innerHTML = '';
+
+      if (!this.quotes || this.quotes.length === 0) {
+        this.quotesListContainer.innerHTML = `
+          <div class="apple-card" style="padding: 40px 20px; text-align: center; border-radius: var(--radius-card);">
+            <div style="font-size: 42px; margin-bottom: 12px;">📑</div>
+            <h3 style="font-size: 17px; font-weight: 700; color: var(--apple-text); margin-bottom: 6px;">No Quotations Yet</h3>
+            <p style="font-size: 13px; color: var(--apple-text-secondary); max-width: 280px; margin: 0 auto 20px; line-height: 1.4;">
+              Create detailed, room-by-room interior proposals for your clients on-site in minutes.
+            </p>
+            <button class="apple-btn-primary" id="btn-empty-create-quote" style="padding: 10px 22px; font-size: 14px; margin: 0 auto; display: inline-flex;">
+              + Create First Quote
+            </button>
+          </div>
+        `;
+        const btnEmpty = document.getElementById('btn-empty-create-quote');
+        if (btnEmpty) {
+          btnEmpty.addEventListener('click', () => {
+            if (this.formNewQuote) this.formNewQuote.reset();
+            this.openSheet(this.sheetNewQuoteOverlay);
+          });
+        }
+        return;
+      }
+
+      this.quotes.forEach(quote => {
+        const roomsCount = quote.rooms ? quote.rooms.length : 0;
+        const netAmt = this.formatCurrency(quote.netAmount || 0);
+        const createdDate = new Date(quote.createdAt || Date.now());
+        const dateStr = createdDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+        const card = document.createElement('div');
+        card.className = 'quote-list-card';
+        card.setAttribute('data-quote-id', quote.id);
+        card.innerHTML = `
+          <div class="quote-list-info">
+            <span class="quote-list-client">${this.escapeHTML(quote.clientName)}</span>
+            <span class="quote-list-project">${this.escapeHTML(quote.projectName)}</span>
+            <span class="quote-list-meta">${roomsCount} Rooms Scheduled &bull; ${dateStr}</span>
+          </div>
+          <div class="quote-list-amount-col">
+            <span class="quote-list-amount">${netAmt}</span>
+            <span class="quote-status-pill">${this.escapeHTML(quote.status || 'Draft')}</span>
+          </div>
+        `;
+        this.quotesListContainer.appendChild(card);
+      });
+    }
+
+    recalculateQuoteTotals(quote) {
+      if (!quote) return;
+      let gross = 0;
+      (quote.rooms || []).forEach(room => {
+        let roomSub = 0;
+        (room.items || []).forEach(item => {
+          roomSub += Number(item.amount) || 0;
+        });
+        room.subtotal = roomSub;
+        gross += roomSub;
+      });
+
+      quote.grossAmount = gross;
+      const discount = Number(quote.discountAmount) || 0;
+      const taxable = Math.max(0, gross - discount);
+      const taxPercent = Number(quote.taxPercent) || 0;
+      const taxAmt = Math.round(taxable * (taxPercent / 100));
+      quote.netAmount = taxable + taxAmt;
+    }
+
+    updateQuoteCommercialsDisplay(quote) {
+      if (!quote) return;
+      const gross = quote.grossAmount || 0;
+      const discount = quote.discountAmount || 0;
+      const net = quote.netAmount || 0;
+
+      if (this.quoteNetTotalDisplay) this.quoteNetTotalDisplay.textContent = this.formatCurrency(net);
+      if (this.quoteAmountWords) this.quoteAmountWords.textContent = this.numberToWordsIndian(net);
+      if (this.quoteGrossDisplay) this.quoteGrossDisplay.textContent = this.formatCurrency(gross);
+      if (this.quoteDiscountDisplay) this.quoteDiscountDisplay.textContent = discount > 0 ? `- ${this.formatCurrency(discount)}` : '₹0';
+      if (this.quoteRoomsCount) this.quoteRoomsCount.textContent = `${quote.rooms ? quote.rooms.length : 0} Rooms`;
+
+      // Payment Milestones
+      const m10 = Math.round(net * 0.10);
+      const m40_1 = Math.round(net * 0.40);
+      const m40_2 = Math.round(net * 0.40);
+      const m10_2 = Math.max(0, net - m10 - m40_1 - m40_2);
+
+      if (this.milestone10) this.milestone10.textContent = this.formatCurrency(m10);
+      if (this.milestone401) this.milestone401.textContent = this.formatCurrency(m40_1);
+      if (this.milestone402) this.milestone402.textContent = this.formatCurrency(m40_2);
+      if (this.milestone102) this.milestone102.textContent = this.formatCurrency(m10_2);
+    }
+
+    renderQuoteDetail(quoteId) {
+      const quote = this.quotes.find(q => q.id === quoteId);
+      if (!quote) return;
+
+      this.recalculateQuoteTotals(quote);
+
+      if (this.quoteClientHeading) this.quoteClientHeading.textContent = quote.clientName;
+      if (this.quoteProjectSub) {
+        this.quoteProjectSub.textContent = quote.projectName + (quote.clientPhone ? ` • ${quote.clientPhone}` : '');
+      }
+      if (this.quoteStatusPill) this.quoteStatusPill.textContent = quote.status || 'Draft';
+
+      if (this.quoteDiscountInput) {
+        this.quoteDiscountInput.value = quote.discountAmount ? this.formatIndianNumberString(String(quote.discountAmount)) : '';
+      }
+      if (this.quoteGstToggle) {
+        this.quoteGstToggle.checked = Number(quote.taxPercent) > 0;
+      }
+
+      this.updateQuoteCommercialsDisplay(quote);
+
+      if (!this.quoteRoomsContainer) return;
+      this.quoteRoomsContainer.innerHTML = '';
+
+      if (!quote.rooms || quote.rooms.length === 0) {
+        this.quoteRoomsContainer.innerHTML = `
+          <div style="text-align:center; padding:30px 16px; background:var(--apple-white); border-radius:var(--radius-card); border:1px dashed var(--apple-border);">
+            <div style="font-size:32px; margin-bottom:8px;">🚪</div>
+            <div style="font-size:14px; font-weight:600; color:var(--apple-text);">No Rooms Added Yet</div>
+            <div style="font-size:12px; color:var(--apple-text-secondary); margin-top:2px;">Tap "+ Add Room" to add bedrooms, kitchen or living room.</div>
+          </div>
+        `;
+        return;
+      }
+
+      quote.rooms.forEach(room => {
+        const roomCard = document.createElement('div');
+        roomCard.className = 'quote-room-card';
+        roomCard.setAttribute('data-room-id', room.id);
+
+        let itemsHTML = '';
+        if (room.items && room.items.length > 0) {
+          itemsHTML = room.items.map(item => {
+            const hasSft = item.sft && item.ratePerSft;
+            const dimsText = hasSft ? `${item.sft} sft &times; ₹${item.ratePerSft}/sft` : (item.notes || 'Lump-sum line item');
+            const notesText = (hasSft && item.notes) ? ` &bull; ${this.escapeHTML(item.notes)}` : '';
+            return `
+              <div class="room-item-row" data-item-id="${item.id}">
+                <div class="room-item-info">
+                  <div class="room-item-title">${this.escapeHTML(item.name)}</div>
+                  <div class="room-item-specs">${dimsText}${notesText}</div>
+                </div>
+                <div class="room-item-actions">
+                  <span class="room-item-cost">${this.formatCurrency(item.amount)}</span>
+                  <button class="room-item-action-icon btn-item-edit" data-room-id="${room.id}" data-item-id="${item.id}" title="Edit Item">✏️</button>
+                  <button class="room-item-action-icon btn-item-delete" data-room-id="${room.id}" data-item-id="${item.id}" title="Delete Item">&times;</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          itemsHTML = `
+            <div class="room-items-empty">
+              No items scheduled yet. Tap <strong>+</strong> in top right to add items.
+            </div>
+          `;
+        }
+
+        roomCard.innerHTML = `
+          <div class="room-card-header">
+            <div class="room-title-group">
+              <span class="room-card-icon">${room.icon || '🏠'}</span>
+              <span class="room-card-name">${this.escapeHTML(room.name)}</span>
+              <span class="room-card-count">${room.items ? room.items.length : 0} items</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="room-card-add-btn" data-room-id="${room.id}" title="Add Item to ${this.escapeHTML(room.name)}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+              <button class="room-delete-btn" data-room-id="${room.id}" title="Remove Room">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="room-items-list">
+            ${itemsHTML}
+          </div>
+
+          <div class="room-card-footer">
+            <span class="room-subtotal-label">Room Subtotal</span>
+            <span class="room-subtotal-val">${this.formatCurrency(room.subtotal || 0)}</span>
+          </div>
+        `;
+
+        this.quoteRoomsContainer.appendChild(roomCard);
+      });
+    }
+
+    async handleNewQuoteSubmit(e) {
+      e.preventDefault();
+      const clientName = document.getElementById('quote-client-name').value.trim();
+      const clientPhone = document.getElementById('quote-client-phone').value.trim();
+      const projectName = document.getElementById('quote-project-name').value.trim();
+
+      if (!clientName || !projectName) return;
+
+      const newQuote = {
+        id: 'quote-' + Date.now(),
+        clientName,
+        clientPhone: clientPhone || '',
+        projectName,
+        rooms: [
+          { id: 'room-' + Date.now() + '-1', name: 'Living Room', icon: '🛋️', items: [], subtotal: 0 },
+          { id: 'room-' + Date.now() + '-2', name: 'Modular Kitchen', icon: '🍳', items: [], subtotal: 0 },
+          { id: 'room-' + Date.now() + '-3', name: 'Master Bedroom', icon: '🛏️', items: [], subtotal: 0 }
+        ],
+        grossAmount: 0,
+        discountAmount: 0,
+        taxPercent: 0,
+        netAmount: 0,
+        status: 'draft',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      await this.saveQuoteToCloud(newQuote);
+      this.formNewQuote.reset();
+      this.closeSheet(this.sheetNewQuoteOverlay);
+      this.openQuoteDetail(newQuote.id);
+      this.showToast(`Started new quotation for ${clientName}`, 'success');
+    }
+
+    addRoomToActiveQuote(roomName, roomIcon = '🏠') {
+      const quote = this.quotes.find(q => q.id === this.activeQuoteId);
+      if (!quote) return;
+
+      if (!quote.rooms) quote.rooms = [];
+      const newRoom = {
+        id: 'room-' + Date.now(),
+        name: roomName,
+        icon: roomIcon,
+        items: [],
+        subtotal: 0
+      };
+      quote.rooms.push(newRoom);
+      this.recalculateQuoteTotals(quote);
+      this.saveQuoteToCloud(quote);
+      this.renderQuoteDetail(quote.id);
+      this.showToast(`Added ${roomName} to quote`, 'success');
+    }
+
+    deleteRoomFromActiveQuote(roomId) {
+      const quote = this.quotes.find(q => q.id === this.activeQuoteId);
+      if (!quote) return;
+
+      const room = (quote.rooms || []).find(r => r.id === roomId);
+      if (!room) return;
+
+      if (!confirm(`Remove "${room.name}" and all its scheduled items from this quote?`)) {
+        return;
+      }
+
+      quote.rooms = quote.rooms.filter(r => r.id !== roomId);
+      this.recalculateQuoteTotals(quote);
+      this.saveQuoteToCloud(quote);
+      this.renderQuoteDetail(quote.id);
+      this.showToast(`Removed ${room.name}`, 'success');
+    }
+
+    openSelectItemSheet(roomId) {
+      this.activeRoomIdForItems = roomId;
+      const quote = this.quotes.find(q => q.id === this.activeQuoteId);
+      const room = quote ? quote.rooms.find(r => r.id === roomId) : null;
+      if (!room) return;
+
+      if (this.selectItemRoomTitle) {
+        this.selectItemRoomTitle.innerHTML = `Add Item to ${room.icon || '🏠'} ${this.escapeHTML(room.name)}`;
+      }
+
+      const catalog = (ROOM_CATALOG[room.name] && ROOM_CATALOG[room.name].items)
+        ? ROOM_CATALOG[room.name].items
+        : this.getFallbackCatalogItems();
+
+      if (this.catalogItemsContainer) {
+        this.catalogItemsContainer.innerHTML = catalog.map((item, idx) => `
+          <div class="catalog-item-card" data-preset-idx="${idx}">
+            <span class="catalog-item-title">${this.escapeHTML(item.name)}</span>
+            <span class="catalog-item-rate">
+              ${item.unit === 'sft' ? `₹${item.rate} / sft` : `Est. ₹${this.formatIndianNumberString(String(item.rate))}`}
+            </span>
+          </div>
+        `).join('');
+      }
+
+      this.openSheet(this.sheetSelectItemOverlay);
+    }
+
+    openConfigureItemSheet(roomId, preset = null, existingItem = null) {
+      this.activeRoomIdForItems = roomId;
+      this.editingItemId = existingItem ? existingItem.id : null;
+
+      const quote = this.quotes.find(q => q.id === this.activeQuoteId);
+      const room = quote ? quote.rooms.find(r => r.id === roomId) : null;
+      if (!room) return;
+
+      const roomIcon = room.icon || '🏠';
+      const itemName = existingItem ? existingItem.name : (preset ? preset.name : 'Custom Item');
+
+      // Set Active Context Banner at Top
+      if (this.itemContextBanner) {
+        this.itemContextBanner.innerHTML = `${roomIcon} ${this.escapeHTML(room.name)} &rsaquo; <span>${this.escapeHTML(itemName)}</span>`;
+      }
+
+      // Populate Form Fields
+      if (existingItem) {
+        this.cfgItemName.value = existingItem.name || '';
+        this.cfgItemWidth.value = existingItem.width || '';
+        this.cfgItemHeight.value = existingItem.height || '';
+        this.cfgItemSft.value = existingItem.sft || '';
+        this.cfgItemRate.value = existingItem.ratePerSft || '';
+        this.cfgItemAmount.value = this.formatIndianNumberString(String(existingItem.amount || 0));
+        this.cfgItemNotes.value = existingItem.notes || '';
+        this.setItemCalculationMode(existingItem.ratePerSft ? 'area' : 'lumpsum');
+      } else if (preset) {
+        this.cfgItemName.value = preset.name || '';
+        this.cfgItemWidth.value = '';
+        this.cfgItemHeight.value = '';
+        this.cfgItemSft.value = '';
+        this.cfgItemRate.value = preset.unit === 'sft' ? preset.rate : '';
+        this.cfgItemAmount.value = preset.unit === 'lumpsum' ? this.formatIndianNumberString(String(preset.rate)) : '';
+        this.cfgItemNotes.value = preset.notes || '';
+        this.setItemCalculationMode(preset.unit === 'sft' ? 'area' : 'lumpsum');
+      } else {
+        this.cfgItemName.value = '';
+        this.cfgItemWidth.value = '';
+        this.cfgItemHeight.value = '';
+        this.cfgItemSft.value = '';
+        this.cfgItemRate.value = '';
+        this.cfgItemAmount.value = '';
+        this.cfgItemNotes.value = '';
+        this.setItemCalculationMode('area');
+      }
+
+      const currentAmount = this.parseAmount(this.cfgItemAmount.value);
+      if (this.cfgItemAmountSubtext) {
+        this.cfgItemAmountSubtext.textContent = currentAmount > 0 ? this.numberToWordsIndian(currentAmount) : '';
+      }
+
+      this.openSheet(this.sheetConfigureItemOverlay);
+    }
+
+    setItemCalculationMode(mode) {
+      this.itemCalcMode = mode;
+      if (this.cfgModeSegmented) {
+        this.cfgModeSegmented.querySelectorAll('.segment').forEach(s => {
+          if (s.getAttribute('data-mode') === mode) s.classList.add('active');
+          else s.classList.remove('active');
+        });
+      }
+
+      if (this.cfgAreaGroup) {
+        if (mode === 'lumpsum') {
+          this.cfgAreaGroup.style.display = 'none';
+        } else {
+          this.cfgAreaGroup.style.display = 'block';
+          this.recalcConfiguredItemAmount();
+        }
+      }
+    }
+
+    recalcConfiguredItemAmount() {
+      if (this.itemCalcMode === 'area') {
+        const w = parseFloat(this.cfgItemWidth.value);
+        const h = parseFloat(this.cfgItemHeight.value);
+        if (w > 0 && h > 0) {
+          const autoSft = +(w * h).toFixed(2);
+          this.cfgItemSft.value = autoSft;
+        }
+
+        const sft = parseFloat(this.cfgItemSft.value) || 0;
+        const rate = parseFloat(this.cfgItemRate.value) || 0;
+
+        if (sft > 0 && rate > 0) {
+          const total = Math.round(sft * rate);
+          this.cfgItemAmount.value = this.formatIndianNumberString(String(total));
+          if (this.cfgItemAmountSubtext) {
+            this.cfgItemAmountSubtext.textContent = this.numberToWordsIndian(total);
+          }
+        }
+      }
+    }
+
+    saveConfiguredItem(e) {
+      e.preventDefault();
+      const quote = this.quotes.find(q => q.id === this.activeQuoteId);
+      if (!quote) return;
+
+      const room = quote.rooms.find(r => r.id === this.activeRoomIdForItems);
+      if (!room) return;
+
+      const name = this.cfgItemName.value.trim();
+      const width = parseFloat(this.cfgItemWidth.value) || null;
+      const height = parseFloat(this.cfgItemHeight.value) || null;
+      const sft = parseFloat(this.cfgItemSft.value) || null;
+      const ratePerSft = parseFloat(this.cfgItemRate.value) || null;
+      const amount = this.parseAmount(this.cfgItemAmount.value);
+      const notes = this.cfgItemNotes.value.trim();
+
+      if (!name) {
+        alert('Please enter an item name');
+        return;
+      }
+      if (amount <= 0) {
+        alert('Please enter a valid item amount or SFT & Rate');
+        return;
+      }
+
+      if (this.editingItemId) {
+        const item = (room.items || []).find(i => i.id === this.editingItemId);
+        if (item) {
+          item.name = name;
+          item.width = width;
+          item.height = height;
+          item.sft = sft;
+          item.ratePerSft = ratePerSft;
+          item.amount = amount;
+          item.notes = notes;
+        }
+      } else {
+        if (!room.items) room.items = [];
+        room.items.push({
+          id: 'item-' + Date.now(),
+          name,
+          width,
+          height,
+          sft,
+          ratePerSft,
+          amount,
+          notes
+        });
+      }
+
+      this.recalculateQuoteTotals(quote);
+      this.saveQuoteToCloud(quote);
+      this.closeSheet(this.sheetConfigureItemOverlay);
+      this.renderQuoteDetail(quote.id);
+      this.showToast(`Saved "${name}" in ${room.name}`, 'success');
+    }
+
+    editItemInRoom(roomId, itemId) {
+      const quote = this.quotes.find(q => q.id === this.activeQuoteId);
+      if (!quote) return;
+
+      const room = (quote.rooms || []).find(r => r.id === roomId);
+      if (!room) return;
+
+      const item = (room.items || []).find(i => i.id === itemId);
+      if (!item) return;
+
+      this.openConfigureItemSheet(roomId, null, item);
+    }
+
+    deleteItemFromRoom(roomId, itemId) {
+      const quote = this.quotes.find(q => q.id === this.activeQuoteId);
+      if (!quote) return;
+
+      const room = (quote.rooms || []).find(r => r.id === roomId);
+      if (!room) return;
+
+      room.items = (room.items || []).filter(i => i.id !== itemId);
+      this.recalculateQuoteTotals(quote);
+      this.saveQuoteToCloud(quote);
+      this.renderQuoteDetail(quote.id);
+      this.showToast('Item deleted', 'success');
+    }
+
+    sendQuoteViaWhatsApp(quoteId) {
+      const quote = this.quotes.find(q => q.id === quoteId);
+      if (!quote) return;
+
+      this.recalculateQuoteTotals(quote);
+
+      const createdDate = new Date(quote.createdAt || Date.now());
+      const dateStr = createdDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+      let roomsSection = '';
+      (quote.rooms || []).forEach(room => {
+        if (!room.items || room.items.length === 0) return;
+        roomsSection += `\n${room.icon || '🏠'} *${room.name}:* ${this.formatCurrency(room.subtotal || 0)}\n`;
+        room.items.forEach(item => {
+          const spec = (item.sft && item.ratePerSft) ? ` (${item.sft} sft)` : '';
+          const note = item.notes ? ` - _${item.notes}_` : '';
+          roomsSection += `• ${item.name}${spec}: ${this.formatCurrency(item.amount)}${note}\n`;
+        });
+      });
+
+      if (!roomsSection.trim()) {
+        roomsSection = '\n_No items scheduled yet._\n';
+      }
+
+      const grossFormatted = this.formatCurrency(quote.grossAmount || 0);
+      const discountFormatted = quote.discountAmount > 0 ? `\n*Special Studio Discount:* -${this.formatCurrency(quote.discountAmount)}` : '';
+      const taxAmount = quote.taxPercent > 0 ? Math.round((quote.grossAmount - (quote.discountAmount || 0)) * 0.18) : 0;
+      const taxFormatted = quote.taxPercent > 0 ? `\n*GST (18%):* +${this.formatCurrency(taxAmount)}` : '';
+      const netFormatted = this.formatCurrency(quote.netAmount || 0);
+      const words = this.numberToWordsIndian(quote.netAmount || 0);
+
+      const net = quote.netAmount || 0;
+      const m10 = Math.round(net * 0.10);
+      const m40_1 = Math.round(net * 0.40);
+      const m40_2 = Math.round(net * 0.40);
+      const m10_2 = Math.max(0, net - m10 - m40_1 - m40_2);
+
+      const waText = 
+`*Aakruthee Interior Studio 🏡*
+*Interior Estimation Proposal*
+
+Client: ${quote.clientName}
+Project: ${quote.projectName}
+Date: ${dateStr}
+
+*Room Breakdown:*${roomsSection}
+----------------------------------------
+*Gross Total:* ${grossFormatted}${discountFormatted}${taxFormatted}
+*Final Project Estimate:* ${netFormatted}
+(${words})
+
+*Payment Milestones:*
+• 10% Booking Advance: ${this.formatCurrency(m10)}
+• 40% Material Procurement: ${this.formatCurrency(m40_1)}
+• 40% On-site Installation: ${this.formatCurrency(m40_2)}
+• 10% Handover: ${this.formatCurrency(m10_2)}
+
+Thank you for trusting Aakruthee Interior Studio! ✨
+Contact: +91 98765 43210`;
+
+      const cleanPhone = (quote.clientPhone || '').replace(/[^0-9]/g, '');
+      const waUrl = cleanPhone.length >= 10
+        ? `https://wa.me/${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}?text=${encodeURIComponent(waText)}`
+        : `https://wa.me/?text=${encodeURIComponent(waText)}`;
+
+      window.open(waUrl, '_blank');
+    }
+
+    printQuote(quoteId) {
+      const quote = this.quotes.find(q => q.id === quoteId);
+      if (!quote) return;
+
+      this.recalculateQuoteTotals(quote);
+
+      const createdDate = new Date(quote.createdAt || Date.now());
+      const dateStr = createdDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+      let roomsTableRows = '';
+      (quote.rooms || []).forEach(room => {
+        roomsTableRows += `
+          <tr style="background:#f2f2f7; font-weight:700;">
+            <td colspan="4" style="padding:10px 12px; font-size:14px; color:#1c1c1e;">
+              ${room.icon || '🏠'} ${this.escapeHTML(room.name)}
+            </td>
+            <td style="padding:10px 12px; font-size:14px; text-align:right; color:#0071e3;">
+              ${this.formatCurrency(room.subtotal || 0)}
+            </td>
+          </tr>
+        `;
+
+        if (room.items && room.items.length > 0) {
+          room.items.forEach((item, idx) => {
+            const specNotes = [
+              item.sft ? `${item.sft} sft` : '',
+              item.ratePerSft ? `@ ₹${item.ratePerSft}/sft` : '',
+              item.notes || ''
+            ].filter(Boolean).join(' • ');
+
+            roomsTableRows += `
+              <tr style="border-bottom:1px solid #e5e5ea;">
+                <td style="padding:8px 12px; font-size:12px; color:#86868b; width:40px;">${idx + 1}</td>
+                <td style="padding:8px 12px; font-size:13px; font-weight:600; color:#1c1c1e;">
+                  ${this.escapeHTML(item.name)}
+                </td>
+                <td style="padding:8px 12px; font-size:12px; color:#636366;" colspan="2">
+                  ${this.escapeHTML(specNotes || '-')}
+                </td>
+                <td style="padding:8px 12px; font-size:13px; font-weight:600; text-align:right; color:#1c1c1e;">
+                  ${this.formatCurrency(item.amount)}
+                </td>
+              </tr>
+            `;
+          });
+        } else {
+          roomsTableRows += `
+            <tr>
+              <td colspan="5" style="padding:8px 12px; font-size:12px; color:#86868b; font-style:italic;">No items scheduled</td>
+            </tr>
+          `;
+        }
+      });
+
+      const net = quote.netAmount || 0;
+      const m10 = Math.round(net * 0.10);
+      const m40_1 = Math.round(net * 0.40);
+      const m40_2 = Math.round(net * 0.40);
+      const m10_2 = Math.max(0, net - m10 - m40_1 - m40_2);
+      const taxAmount = quote.taxPercent > 0 ? Math.round((quote.grossAmount - (quote.discountAmount || 0)) * 0.18) : 0;
+
+      const printHtml = `
+        <div style="font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; max-width:800px; margin:0 auto; padding:24px; color:#1c1c1e;">
+          <!-- Header -->
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #0071e3; padding-bottom:16px; margin-bottom:20px;">
+            <div>
+              <h1 style="font-size:24px; font-weight:800; color:#0071e3; margin:0 0 4px 0; letter-spacing:-0.5px;">AAKRUTHEE INTERIOR STUDIO</h1>
+              <div style="font-size:12px; color:#636366; line-height:1.4;">Bespoke Interior Architecture & Project Execution<br>Hyderabad • Telangana • Contact: +91 98765 43210</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:18px; font-weight:700; color:#1c1c1e;">ESTIMATE PROPOSAL</div>
+              <div style="font-size:12px; color:#86868b; margin-top:4px;">Date: ${dateStr}</div>
+              <div style="font-size:12px; color:#86868b;">Ref: #${quote.id.slice(-6).toUpperCase()}</div>
+            </div>
+          </div>
+
+          <!-- Client & Project Details -->
+          <div style="display:flex; justify-content:space-between; background:#f2f2f7; border-radius:12px; padding:14px 18px; margin-bottom:24px;">
+            <div>
+              <div style="font-size:11px; text-transform:uppercase; font-weight:700; color:#86868b; letter-spacing:0.5px;">Client Information</div>
+              <div style="font-size:16px; font-weight:700; color:#1c1c1e; margin-top:2px;">${this.escapeHTML(quote.clientName)}</div>
+              ${quote.clientPhone ? `<div style="font-size:13px; color:#636366;">Phone: ${this.escapeHTML(quote.clientPhone)}</div>` : ''}
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:11px; text-transform:uppercase; font-weight:700; color:#86868b; letter-spacing:0.5px;">Project Site</div>
+              <div style="font-size:16px; font-weight:700; color:#1c1c1e; margin-top:2px;">${this.escapeHTML(quote.projectName)}</div>
+              <div style="font-size:13px; color:#636366;">${quote.rooms ? quote.rooms.length : 0} Rooms Scheduled</div>
+            </div>
+          </div>
+
+          <!-- Itemized Table -->
+          <table style="width:100%; border-collapse:collapse; margin-bottom:24px;">
+            <thead>
+              <tr style="border-bottom:2px solid #e5e5ea; text-align:left;">
+                <th style="padding:8px 12px; font-size:11px; text-transform:uppercase; color:#86868b;">#</th>
+                <th style="padding:8px 12px; font-size:11px; text-transform:uppercase; color:#86868b;">Item Description</th>
+                <th style="padding:8px 12px; font-size:11px; text-transform:uppercase; color:#86868b;" colspan="2">Specifications & Dimensions</th>
+                <th style="padding:8px 12px; font-size:11px; text-transform:uppercase; color:#86868b; text-align:right;">Amount (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${roomsTableRows}
+            </tbody>
+          </table>
+
+          <!-- Commercials Summary -->
+          <div style="display:flex; justify-content:flex-end; margin-bottom:30px;">
+            <div style="width:320px; background:#f2f2f7; border-radius:12px; padding:16px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; color:#636366;">
+                <span>Gross Subtotal:</span>
+                <span style="font-weight:600; color:#1c1c1e;">${this.formatCurrency(quote.grossAmount || 0)}</span>
+              </div>
+              ${quote.discountAmount > 0 ? `
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; color:#ff3b30;">
+                  <span>Studio Discount:</span>
+                  <span style="font-weight:600;">-${this.formatCurrency(quote.discountAmount)}</span>
+                </div>
+              ` : ''}
+              ${quote.taxPercent > 0 ? `
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; color:#636366;">
+                  <span>GST (18%):</span>
+                  <span style="font-weight:600; color:#1c1c1e;">+${this.formatCurrency(taxAmount)}</span>
+                </div>
+              ` : ''}
+              <div style="display:flex; justify-content:space-between; padding-top:10px; border-top:1px solid #d1d1d6; font-size:16px; font-weight:800; color:#0071e3;">
+                <span>Final Estimate:</span>
+                <span>${this.formatCurrency(quote.netAmount || 0)}</span>
+              </div>
+              <div style="font-size:11px; color:#86868b; margin-top:4px; text-align:right;">
+                ${this.numberToWordsIndian(quote.netAmount || 0)}
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Schedule -->
+          <div style="background:#ffffff; border:1px solid #e5e5ea; border-radius:12px; padding:16px; margin-bottom:24px;">
+            <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#1c1c1e; margin-bottom:10px; letter-spacing:0.5px;">
+              Standard Payment Schedule
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; text-align:center;">
+              <div style="background:#f2f2f7; padding:10px; border-radius:8px;">
+                <div style="font-size:11px; color:#86868b;">10% Advance</div>
+                <div style="font-size:13px; font-weight:700; color:#0071e3; margin-top:4px;">${this.formatCurrency(m10)}</div>
+                <div style="font-size:10px; color:#636366; margin-top:2px;">Booking & 3D Design</div>
+              </div>
+              <div style="background:#f2f2f7; padding:10px; border-radius:8px;">
+                <div style="font-size:11px; color:#86868b;">40% Procurement</div>
+                <div style="font-size:13px; font-weight:700; color:#0071e3; margin-top:4px;">${this.formatCurrency(m40_1)}</div>
+                <div style="font-size:10px; color:#636366; margin-top:2px;">Plywood & Hardware</div>
+              </div>
+              <div style="background:#f2f2f7; padding:10px; border-radius:8px;">
+                <div style="font-size:11px; color:#86868b;">40% Installation</div>
+                <div style="font-size:13px; font-weight:700; color:#0071e3; margin-top:4px;">${this.formatCurrency(m40_2)}</div>
+                <div style="font-size:10px; color:#636366; margin-top:2px;">On-site Carcass Fit</div>
+              </div>
+              <div style="background:#f2f2f7; padding:10px; border-radius:8px;">
+                <div style="font-size:11px; color:#86868b;">10% Handover</div>
+                <div style="font-size:13px; font-weight:700; color:#0071e3; margin-top:4px;">${this.formatCurrency(m10_2)}</div>
+                <div style="font-size:10px; color:#636366; margin-top:2px;">Final Polish & Cleaning</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Terms Footer -->
+          <div style="font-size:11px; color:#86868b; line-height:1.5; border-top:1px solid #e5e5ea; padding-top:12px;">
+            <strong>Terms & Conditions:</strong><br>
+            1. Estimate validity: 15 days from issue date.<br>
+            2. Scope changes or on-site additions will be billed separately with prior client approval.<br>
+            3. Warranty: 10 Years Flat Plywood Warranty & 5 Years Hardware Warranty (Hafele/Hettich/Ebco).
+          </div>
+        </div>
+      `;
+
+      if (this.printQuotationView) {
+        this.printQuotationView.innerHTML = printHtml;
+      }
+      window.print();
+    }
+
+    async saveQuoteToCloud(quote, silent = false) {
+      if (!quote) return;
+      quote.updatedAt = new Date().toISOString();
+
+      const existingIdx = this.quotes.findIndex(q => q.id === quote.id);
+      if (existingIdx !== -1) {
+        this.quotes[existingIdx] = quote;
+      } else {
+        this.quotes.unshift(quote);
+      }
+
+      this.saveLocalCache();
+
+      try {
+        const isUpdate = existingIdx !== -1;
+        const url = isUpdate ? `/api/quotes/${quote.id}` : '/api/quotes';
+        const method = isUpdate ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(quote)
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.quotes) {
+            this.quotes = data.quotes;
+            this.saveLocalCache();
+          }
+        }
+      } catch (err) {
+        console.log('Failed to save quote to cloud, updated locally:', err);
+      }
+    }
+
+    async deleteQuoteFromCloud(quoteId) {
+      const quote = this.quotes.find(q => q.id === quoteId);
+      if (!quote) return;
+
+      if (!confirm(`Are you sure you want to delete quotation for "${quote.clientName}"?`)) {
+        return;
+      }
+
+      this.quotes = this.quotes.filter(q => q.id !== quoteId);
+      this.saveLocalCache();
+      this.openQuotesHub();
+      this.showToast(`Deleted quotation for "${quote.clientName}"`, 'success');
+
+      try {
+        const response = await fetch(`/api/quotes/${quoteId}`, { method: 'DELETE' });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.quotes) {
+            this.quotes = data.quotes;
+            this.saveLocalCache();
+            this.renderQuotesHub();
+          }
+        }
+      } catch (err) {
+        console.log('Failed to delete quote from cloud, updated locally:', err);
+      }
     }
 
     escapeHTML(str) {

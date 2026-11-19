@@ -1591,3 +1591,690 @@ input[type="time"]:focus {
   animation: taskPulseGlow 1.8s ease-in-out 2;
   border-color: var(--apple-blue) !important;
 }
+
+/* ==========================================================================
+   QUOTATIONS & ROOM-BY-ROOM ESTIMATION BUILDER STYLES
+   ========================================================================== */
+
+/* Hero Quick Entry Button for Quotations */
+.btn-quotes-action {
+  border-color: rgba(0, 113, 227, 0.25);
+}
+
+.btn-quotes-action::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: radial-gradient(circle at 90% 10%, rgba(0, 113, 227, 0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.btn-quotes-action .btn-icon-wrapper {
+  background: rgba(0, 113, 227, 0.1);
+  color: var(--apple-blue);
+  border: 1px solid rgba(0, 113, 227, 0.25);
+}
+
+/* Quotes Hub List */
+.apple-quotes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.quote-list-card {
+  background: var(--apple-white);
+  border: 1px solid var(--apple-border);
+  border-radius: var(--radius-card);
+  padding: 16px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-apple);
+  cursor: pointer;
+  transition: var(--transition-apple);
+}
+
+.quote-list-card:active {
+  transform: scale(0.98);
+  background: var(--apple-card-hover);
+}
+
+.quote-list-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.quote-list-client {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--apple-text);
+}
+
+.quote-list-project {
+  font-size: 13px;
+  color: var(--apple-text-secondary);
+}
+
+.quote-list-meta {
+  font-size: 11px;
+  color: var(--apple-text-tertiary);
+  margin-top: 2px;
+}
+
+.quote-list-amount-col {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.quote-list-amount {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--apple-blue);
+}
+
+.quote-status-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-capsule);
+  background: rgba(0, 113, 227, 0.1);
+  color: var(--apple-blue);
+  border: 1px solid rgba(0, 113, 227, 0.2);
+}
+
+/* Quote Detail Hero Card */
+.quote-hero-card {
+  margin-bottom: 16px;
+}
+
+.quote-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.quote-project-sub {
+  font-size: 13px;
+  color: var(--apple-text-secondary);
+  margin-top: 2px;
+}
+
+.quote-amount-words {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--apple-text-secondary);
+  margin-top: 2px;
+}
+
+.quote-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.apple-action-btn-sm {
+  padding: 6px 12px;
+  border-radius: var(--radius-capsule);
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: var(--transition-apple);
+}
+
+.btn-quote-wa {
+  background: #25d366;
+  color: #ffffff;
+}
+
+.btn-quote-print {
+  background: #f2f2f7;
+  color: var(--apple-text);
+  border: 1px solid var(--apple-border);
+}
+
+/* Rooms Section & Room Cards */
+.quote-rooms-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.quote-rooms-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.quote-rooms-header h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--apple-text);
+}
+
+.apple-btn-secondary-sm {
+  background: #f2f2f7;
+  border: 1px solid var(--apple-border);
+  padding: 6px 14px;
+  border-radius: var(--radius-capsule);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--apple-blue);
+  cursor: pointer;
+}
+
+.quote-rooms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.quote-room-card {
+  background: var(--apple-white);
+  border: 1px solid var(--apple-border);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  box-shadow: var(--shadow-apple);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.room-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--apple-border-subtle);
+}
+
+.room-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.room-card-icon {
+  font-size: 20px;
+}
+
+.room-card-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--apple-text);
+}
+
+.room-card-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--apple-text-secondary);
+  background: #f2f2f7;
+  padding: 2px 8px;
+  border-radius: var(--radius-capsule);
+}
+
+.room-card-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.room-subtotal-badge {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--apple-text);
+}
+
+/* TOP-RIGHT + BUTTON ON ROOM CARD */
+.room-card-add-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--apple-blue);
+  color: #ffffff;
+  border: none;
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.room-card-add-btn:active {
+  transform: scale(0.9);
+}
+
+.room-delete-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.6;
+  padding: 4px;
+}
+
+.room-delete-btn:hover {
+  opacity: 1;
+}
+
+/* Room Items List */
+.room-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.room-item-row {
+  background: #f9f9fb;
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--apple-border-subtle);
+}
+
+.room-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.room-item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--apple-text);
+}
+
+.room-item-calc {
+  font-size: 12px;
+  color: var(--apple-text-secondary);
+}
+
+.room-item-notes {
+  font-size: 11px;
+  color: var(--apple-text-tertiary);
+  font-style: italic;
+}
+
+.room-item-amt-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.room-item-amt {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--apple-text);
+  white-space: nowrap;
+}
+
+.room-item-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.item-action-icon-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.7;
+}
+
+.item-action-icon-btn:hover {
+  opacity: 1;
+}
+
+/* Dashed Add Button */
+.apple-dashed-add-btn {
+  width: 100%;
+  padding: 14px;
+  border: 2px dashed var(--apple-border-subtle);
+  border-radius: var(--radius-card);
+  background: transparent;
+  color: var(--apple-blue);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: var(--transition-apple);
+}
+
+.apple-dashed-add-btn:active {
+  background: rgba(0, 113, 227, 0.05);
+  border-color: var(--apple-blue);
+}
+
+/* Room Presets Bottom Sheet */
+.sheet-body-scrollable {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 8px 0 24px;
+}
+
+.room-preset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.room-preset-btn {
+  background: #f2f2f7;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: var(--transition-apple);
+}
+
+.room-preset-btn:active {
+  background: #e5e5ea;
+  transform: scale(0.97);
+}
+
+.room-preset-btn .icon {
+  font-size: 26px;
+}
+
+.room-preset-btn .title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--apple-text);
+  text-align: center;
+}
+
+.custom-room-divider {
+  text-align: center;
+  margin: 18px 0 12px;
+  position: relative;
+}
+
+.custom-room-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  height: 1px;
+  background: var(--apple-border-subtle);
+}
+
+.custom-room-divider span {
+  position: relative;
+  background: var(--apple-white);
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--apple-text-tertiary);
+  letter-spacing: 0.5px;
+}
+
+/* Catalog Items Grid */
+.catalog-items-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.catalog-item-card {
+  background: #f2f2f7;
+  border: 1px solid var(--apple-border-subtle);
+  border-radius: 16px;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition-apple);
+}
+
+.catalog-item-card:active {
+  background: #e5e5ea;
+  border-color: var(--apple-blue);
+  transform: scale(0.97);
+}
+
+.catalog-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--apple-text);
+  line-height: 1.3;
+}
+
+.catalog-item-rate {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--apple-blue);
+}
+
+/* ACTIVE CONTEXT BANNER AT TOP OF ITEM CONFIG SHEET */
+.item-context-banner {
+  width: 100%;
+  background: rgba(0, 113, 227, 0.08);
+  border: 1px solid rgba(0, 113, 227, 0.2);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--apple-blue);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 8px;
+}
+
+/* Dimension Helper Box */
+.dimension-helper-box {
+  background: #f2f2f7;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid var(--apple-border-subtle);
+}
+
+.dimension-inputs-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dimension-inputs-row input {
+  flex: 1;
+  background: #ffffff !important;
+}
+
+.dim-multiplier {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--apple-text-tertiary);
+}
+
+/* Commercials & Tax Toggle */
+.quote-commercials-card {
+  margin-bottom: 80px;
+}
+
+.tax-toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--apple-border-subtle);
+}
+
+.apple-switch {
+  position: relative;
+  display: inline-block;
+  width: 51px;
+  height: 31px;
+}
+
+.apple-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.apple-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #e5e5ea;
+  transition: 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  border-radius: 34px;
+}
+
+.apple-switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 27px;
+  width: 27px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.apple-switch input:checked + .slider {
+  background-color: var(--apple-green);
+}
+
+.apple-switch input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.milestone-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--apple-text);
+  padding: 4px 0;
+}
+
+.milestone-row strong {
+  font-weight: 700;
+  color: var(--apple-blue);
+}
+
+/* Quote Sticky Bottom Bar */
+.quote-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 440px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--apple-border);
+  padding: 12px 16px;
+  display: flex;
+  gap: 10px;
+  z-index: 85;
+}
+
+.quote-bar-btn {
+  flex: 1;
+  height: 46px;
+  border-radius: var(--radius-capsule);
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: var(--transition-apple);
+}
+
+.btn-wa-quote {
+  background: #25d366;
+  color: #ffffff;
+}
+
+.btn-print-quote {
+  background: #f2f2f7;
+  color: var(--apple-text);
+  border: 1px solid var(--apple-border);
+}
+
+/* Print Stylesheet for PDF & Paper Quotations */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .apple-top-header,
+  .apple-bottom-nav,
+  .detail-top-nav,
+  .quote-bottom-bar,
+  .room-card-add-btn,
+  .room-delete-btn,
+  .room-item-actions,
+  .apple-dashed-add-btn,
+  .apple-btn-secondary-sm,
+  .tax-toggle-row,
+  .form-group,
+  .bottom-sheet-overlay,
+  .privacy-shield,
+  #apple-lock-screen,
+  #apple-toast-container,
+  #view-quick-entry,
+  #view-dashboard,
+  #view-tasks,
+  #view-activity,
+  #view-project-detail,
+  #view-quotes-hub {
+    display: none !important;
+  }
+
+  #view-quote-detail {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .quote-hero-card,
+  .quote-room-card,
+  .quote-commercials-card {
+    box-shadow: none !important;
+    border: 1px solid #cccccc !important;
+    page-break-inside: avoid;
+  }
+
+  .print-header-brand {
+    display: block !important;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #000;
+    padding-bottom: 10px;
+  }
+}
