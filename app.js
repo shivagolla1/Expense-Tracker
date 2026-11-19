@@ -875,8 +875,8 @@
       this.quotesListContainer = document.getElementById('quotes-list-container');
       this.viewQuoteDetail = document.getElementById('view-quote-detail');
       this.btnBackToQuotesHub = document.getElementById('btn-back-to-quotes-hub');
-      this.btnQuoteWhatsapp = document.getElementById('btn-quote-whatsapp');
-      this.btnQuotePrint = document.getElementById('btn-quote-print');
+      this.btnQuotePreview = document.getElementById('btn-quote-preview');
+      this.btnQuoteShare = document.getElementById('btn-quote-share');
       this.btnDeleteQuote = document.getElementById('btn-delete-quote');
       this.quoteClientHeading = document.getElementById('quote-client-heading');
       this.quoteProjectSub = document.getElementById('quote-project-sub');
@@ -895,8 +895,11 @@
       this.milestone401 = document.getElementById('milestone-40-1');
       this.milestone402 = document.getElementById('milestone-40-2');
       this.milestone102 = document.getElementById('milestone-10-2');
-      this.btnBottomQuoteWa = document.getElementById('btn-bottom-quote-wa');
-      this.btnBottomQuotePrint = document.getElementById('btn-bottom-quote-print');
+      this.btnBottomQuotePreview = document.getElementById('btn-bottom-quote-preview');
+      this.btnBottomQuoteShare = document.getElementById('btn-bottom-quote-share');
+      this.sheetQuotePreviewOverlay = document.getElementById('sheet-quote-preview-overlay');
+      this.inappQuoteDocument = document.getElementById('inapp-quote-document');
+      this.btnPreviewModalShare = document.getElementById('btn-preview-modal-share');
       this.sheetNewQuoteOverlay = document.getElementById('sheet-new-quote-overlay');
       this.formNewQuote = document.getElementById('form-new-quote');
       this.sheetAddRoomOverlay = document.getElementById('sheet-add-room-overlay');
@@ -1257,17 +1260,20 @@
           }
         });
       }
-      if (this.btnQuoteWhatsapp) {
-        this.btnQuoteWhatsapp.addEventListener('click', () => this.sendQuoteViaWhatsApp(this.activeQuoteId));
+      if (this.btnQuotePreview) {
+        this.btnQuotePreview.addEventListener('click', () => this.openQuotePreview(this.activeQuoteId));
       }
-      if (this.btnBottomQuoteWa) {
-        this.btnBottomQuoteWa.addEventListener('click', () => this.sendQuoteViaWhatsApp(this.activeQuoteId));
+      if (this.btnBottomQuotePreview) {
+        this.btnBottomQuotePreview.addEventListener('click', () => this.openQuotePreview(this.activeQuoteId));
       }
-      if (this.btnQuotePrint) {
-        this.btnQuotePrint.addEventListener('click', () => this.printQuote(this.activeQuoteId));
+      if (this.btnQuoteShare) {
+        this.btnQuoteShare.addEventListener('click', () => this.shareQuotePDF(this.activeQuoteId));
       }
-      if (this.btnBottomQuotePrint) {
-        this.btnBottomQuotePrint.addEventListener('click', () => this.printQuote(this.activeQuoteId));
+      if (this.btnBottomQuoteShare) {
+        this.btnBottomQuoteShare.addEventListener('click', () => this.shareQuotePDF(this.activeQuoteId));
+      }
+      if (this.btnPreviewModalShare) {
+        this.btnPreviewModalShare.addEventListener('click', () => this.shareQuotePDF(this.activeQuoteId));
       }
       if (this.btnDeleteQuote) {
         this.btnDeleteQuote.addEventListener('click', () => this.deleteQuoteFromCloud(this.activeQuoteId));
@@ -3086,23 +3092,23 @@ Contact: +91 98765 43210`;
       window.open(waUrl, '_blank');
     }
 
-    printQuote(quoteId) {
-      const quote = this.quotes.find(q => q.id === quoteId);
-      if (!quote) return;
+    generateQuoteDocumentHTML(quote) {
+      if (!quote) return '';
 
       this.recalculateQuoteTotals(quote);
 
       const createdDate = new Date(quote.createdAt || Date.now());
       const dateStr = createdDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      const refId = `#AK-${(quote.id || '').slice(-6).toUpperCase()}`;
 
       let roomsTableRows = '';
       (quote.rooms || []).forEach(room => {
         roomsTableRows += `
-          <tr style="background:#f2f2f7; font-weight:700;">
-            <td colspan="4" style="padding:10px 12px; font-size:14px; color:#1c1c1e;">
-              ${room.icon || '🏠'} ${this.escapeHTML(room.name)}
+          <tr class="room-head-row">
+            <td colspan="4" style="background:#f2f2f7; font-weight:700; font-size:13px; color:#1c1c1e; padding:8px 10px;">
+              ${room.icon || '🏠'} ${this.escapeHTML(room.name)} (${room.items ? room.items.length : 0} items)
             </td>
-            <td style="padding:10px 12px; font-size:14px; text-align:right; color:#0071e3;">
+            <td class="subtotal-col" style="background:#f2f2f7; font-weight:700; font-size:13px; color:#0071e3; text-align:right; padding:8px 10px;">
               ${this.formatCurrency(room.subtotal || 0)}
             </td>
           </tr>
@@ -3117,15 +3123,15 @@ Contact: +91 98765 43210`;
             ].filter(Boolean).join(' • ');
 
             roomsTableRows += `
-              <tr style="border-bottom:1px solid #e5e5ea;">
-                <td style="padding:8px 12px; font-size:12px; color:#86868b; width:40px;">${idx + 1}</td>
-                <td style="padding:8px 12px; font-size:13px; font-weight:600; color:#1c1c1e;">
+              <tr class="item-row" style="border-bottom:1px solid #f2f2f7;">
+                <td style="padding:7px 10px; font-size:11px; color:#86868b; width:30px;">${idx + 1}</td>
+                <td style="padding:7px 10px; font-size:12px; font-weight:600; color:#1c1c1e;">
                   ${this.escapeHTML(item.name)}
                 </td>
-                <td style="padding:8px 12px; font-size:12px; color:#636366;" colspan="2">
+                <td colspan="2" class="item-spec" style="padding:7px 10px; font-size:11px; color:#636366;">
                   ${this.escapeHTML(specNotes || '-')}
                 </td>
-                <td style="padding:8px 12px; font-size:13px; font-weight:600; text-align:right; color:#1c1c1e;">
+                <td style="padding:7px 10px; font-size:12px; font-weight:600; text-align:right; color:#1c1c1e;">
                   ${this.formatCurrency(item.amount)}
                 </td>
               </tr>
@@ -3133,134 +3139,224 @@ Contact: +91 98765 43210`;
           });
         } else {
           roomsTableRows += `
-            <tr>
-              <td colspan="5" style="padding:8px 12px; font-size:12px; color:#86868b; font-style:italic;">No items scheduled</td>
+            <tr class="item-row">
+              <td colspan="5" style="padding:6px 10px; font-size:11px; color:#86868b; font-style:italic;">No items scheduled yet</td>
             </tr>
           `;
         }
       });
 
+      const gross = quote.grossAmount || 0;
+      const discount = quote.discountAmount || 0;
       const net = quote.netAmount || 0;
+      const taxAmount = quote.taxPercent > 0 ? Math.round((gross - discount) * 0.18) : 0;
+
       const m10 = Math.round(net * 0.10);
       const m40_1 = Math.round(net * 0.40);
       const m40_2 = Math.round(net * 0.40);
       const m10_2 = Math.max(0, net - m10 - m40_1 - m40_2);
-      const taxAmount = quote.taxPercent > 0 ? Math.round((quote.grossAmount - (quote.discountAmount || 0)) * 0.18) : 0;
 
-      const printHtml = `
-        <div style="font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; max-width:800px; margin:0 auto; padding:24px; color:#1c1c1e;">
-          <!-- Header -->
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #0071e3; padding-bottom:16px; margin-bottom:20px;">
-            <div>
-              <h1 style="font-size:24px; font-weight:800; color:#0071e3; margin:0 0 4px 0; letter-spacing:-0.5px;">AAKRUTHEE INTERIOR STUDIO</h1>
-              <div style="font-size:12px; color:#636366; line-height:1.4;">Bespoke Interior Architecture & Project Execution<br>Hyderabad • Telangana • Contact: +91 98765 43210</div>
-            </div>
-            <div style="text-align:right;">
-              <div style="font-size:18px; font-weight:700; color:#1c1c1e;">ESTIMATE PROPOSAL</div>
-              <div style="font-size:12px; color:#86868b; margin-top:4px;">Date: ${dateStr}</div>
-              <div style="font-size:12px; color:#86868b;">Ref: #${quote.id.slice(-6).toUpperCase()}</div>
+      return `
+        <!-- BRAND HEADER -->
+        <div class="doc-brand-header">
+          <div>
+            <h1 class="doc-brand-title">AAKRUTHEE INTERIOR STUDIO</h1>
+            <div class="doc-brand-sub">
+              Bespoke Interior Architecture & Project Execution<br>
+              Hyderabad • Telangana • Contact: +91 98765 43210
             </div>
           </div>
-
-          <!-- Client & Project Details -->
-          <div style="display:flex; justify-content:space-between; background:#f2f2f7; border-radius:12px; padding:14px 18px; margin-bottom:24px;">
-            <div>
-              <div style="font-size:11px; text-transform:uppercase; font-weight:700; color:#86868b; letter-spacing:0.5px;">Client Information</div>
-              <div style="font-size:16px; font-weight:700; color:#1c1c1e; margin-top:2px;">${this.escapeHTML(quote.clientName)}</div>
-              ${quote.clientPhone ? `<div style="font-size:13px; color:#636366;">Phone: ${this.escapeHTML(quote.clientPhone)}</div>` : ''}
-            </div>
-            <div style="text-align:right;">
-              <div style="font-size:11px; text-transform:uppercase; font-weight:700; color:#86868b; letter-spacing:0.5px;">Project Site</div>
-              <div style="font-size:16px; font-weight:700; color:#1c1c1e; margin-top:2px;">${this.escapeHTML(quote.projectName)}</div>
-              <div style="font-size:13px; color:#636366;">${quote.rooms ? quote.rooms.length : 0} Rooms Scheduled</div>
-            </div>
-          </div>
-
-          <!-- Itemized Table -->
-          <table style="width:100%; border-collapse:collapse; margin-bottom:24px;">
-            <thead>
-              <tr style="border-bottom:2px solid #e5e5ea; text-align:left;">
-                <th style="padding:8px 12px; font-size:11px; text-transform:uppercase; color:#86868b;">#</th>
-                <th style="padding:8px 12px; font-size:11px; text-transform:uppercase; color:#86868b;">Item Description</th>
-                <th style="padding:8px 12px; font-size:11px; text-transform:uppercase; color:#86868b;" colspan="2">Specifications & Dimensions</th>
-                <th style="padding:8px 12px; font-size:11px; text-transform:uppercase; color:#86868b; text-align:right;">Amount (₹)</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${roomsTableRows}
-            </tbody>
-          </table>
-
-          <!-- Commercials Summary -->
-          <div style="display:flex; justify-content:flex-end; margin-bottom:30px;">
-            <div style="width:320px; background:#f2f2f7; border-radius:12px; padding:16px;">
-              <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; color:#636366;">
-                <span>Gross Subtotal:</span>
-                <span style="font-weight:600; color:#1c1c1e;">${this.formatCurrency(quote.grossAmount || 0)}</span>
-              </div>
-              ${quote.discountAmount > 0 ? `
-                <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; color:#ff3b30;">
-                  <span>Studio Discount:</span>
-                  <span style="font-weight:600;">-${this.formatCurrency(quote.discountAmount)}</span>
-                </div>
-              ` : ''}
-              ${quote.taxPercent > 0 ? `
-                <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; color:#636366;">
-                  <span>GST (18%):</span>
-                  <span style="font-weight:600; color:#1c1c1e;">+${this.formatCurrency(taxAmount)}</span>
-                </div>
-              ` : ''}
-              <div style="display:flex; justify-content:space-between; padding-top:10px; border-top:1px solid #d1d1d6; font-size:16px; font-weight:800; color:#0071e3;">
-                <span>Final Estimate:</span>
-                <span>${this.formatCurrency(quote.netAmount || 0)}</span>
-              </div>
-              <div style="font-size:11px; color:#86868b; margin-top:4px; text-align:right;">
-                ${this.numberToWordsIndian(quote.netAmount || 0)}
-              </div>
-            </div>
-          </div>
-
-          <!-- Payment Schedule -->
-          <div style="background:#ffffff; border:1px solid #e5e5ea; border-radius:12px; padding:16px; margin-bottom:24px;">
-            <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#1c1c1e; margin-bottom:10px; letter-spacing:0.5px;">
-              Standard Payment Schedule
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; text-align:center;">
-              <div style="background:#f2f2f7; padding:10px; border-radius:8px;">
-                <div style="font-size:11px; color:#86868b;">10% Advance</div>
-                <div style="font-size:13px; font-weight:700; color:#0071e3; margin-top:4px;">${this.formatCurrency(m10)}</div>
-                <div style="font-size:10px; color:#636366; margin-top:2px;">Booking & 3D Design</div>
-              </div>
-              <div style="background:#f2f2f7; padding:10px; border-radius:8px;">
-                <div style="font-size:11px; color:#86868b;">40% Procurement</div>
-                <div style="font-size:13px; font-weight:700; color:#0071e3; margin-top:4px;">${this.formatCurrency(m40_1)}</div>
-                <div style="font-size:10px; color:#636366; margin-top:2px;">Plywood & Hardware</div>
-              </div>
-              <div style="background:#f2f2f7; padding:10px; border-radius:8px;">
-                <div style="font-size:11px; color:#86868b;">40% Installation</div>
-                <div style="font-size:13px; font-weight:700; color:#0071e3; margin-top:4px;">${this.formatCurrency(m40_2)}</div>
-                <div style="font-size:10px; color:#636366; margin-top:2px;">On-site Carcass Fit</div>
-              </div>
-              <div style="background:#f2f2f7; padding:10px; border-radius:8px;">
-                <div style="font-size:11px; color:#86868b;">10% Handover</div>
-                <div style="font-size:13px; font-weight:700; color:#0071e3; margin-top:4px;">${this.formatCurrency(m10_2)}</div>
-                <div style="font-size:10px; color:#636366; margin-top:2px;">Final Polish & Cleaning</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Terms Footer -->
-          <div style="font-size:11px; color:#86868b; line-height:1.5; border-top:1px solid #e5e5ea; padding-top:12px;">
-            <strong>Terms & Conditions:</strong><br>
-            1. Estimate validity: 15 days from issue date.<br>
-            2. Scope changes or on-site additions will be billed separately with prior client approval.<br>
-            3. Warranty: 10 Years Flat Plywood Warranty & 5 Years Hardware Warranty (Hafele/Hettich/Ebco).
+          <div class="doc-meta-right">
+            <div class="doc-proposal-tag">Interior Estimate</div>
+            <div class="doc-meta-sub">Date: ${dateStr}</div>
+            <div class="doc-meta-sub">Ref: ${refId}</div>
           </div>
         </div>
+
+        <!-- CLIENT & PROPERTY DETAILS -->
+        <div class="doc-client-card">
+          <div>
+            <div class="lbl">Client Information</div>
+            <div class="val">${this.escapeHTML(quote.clientName)}</div>
+            ${quote.clientPhone ? `<div class="sub">📞 ${this.escapeHTML(quote.clientPhone)}</div>` : ''}
+          </div>
+          <div style="text-align:right;">
+            <div class="lbl">Project Site</div>
+            <div class="val">${this.escapeHTML(quote.projectName)}</div>
+            <div class="sub">${quote.rooms ? quote.rooms.length : 0} Rooms Scheduled</div>
+          </div>
+        </div>
+
+        <!-- ROOM-BY-ROOM TABLE -->
+        <table class="doc-table">
+          <thead>
+            <tr>
+              <th style="width:30px;">#</th>
+              <th>Item Name</th>
+              <th colspan="2">Dimensions & Material Specs</th>
+              <th style="text-align:right;">Amount (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${roomsTableRows}
+          </tbody>
+        </table>
+
+        <!-- COMMERCIALS SUMMARY -->
+        <div class="doc-commercials-box">
+          <div class="doc-commercial-line">
+            <span>Gross Subtotal:</span>
+            <span style="font-weight:600; color:#1c1c1e;">${this.formatCurrency(gross)}</span>
+          </div>
+          ${discount > 0 ? `
+            <div class="doc-commercial-line" style="color:#ff3b30;">
+              <span>Special Studio Discount:</span>
+              <span style="font-weight:600;">-${this.formatCurrency(discount)}</span>
+            </div>
+          ` : ''}
+          ${quote.taxPercent > 0 ? `
+            <div class="doc-commercial-line">
+              <span>GST (18%):</span>
+              <span style="font-weight:600; color:#1c1c1e;">+${this.formatCurrency(taxAmount)}</span>
+            </div>
+          ` : ''}
+          <div class="doc-commercial-line total">
+            <span>Final Project Estimate:</span>
+            <span>${this.formatCurrency(net)}</span>
+          </div>
+          <div class="doc-words-note">
+            (${this.numberToWordsIndian(net)})
+          </div>
+        </div>
+
+        <!-- PAYMENT MILESTONES -->
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#86868b; margin-bottom:8px; letter-spacing:0.5px;">
+          Milestone Payment Schedule
+        </div>
+        <div class="doc-milestones-grid">
+          <div class="doc-milestone-cell">
+            <div class="pct">10% Booking Advance</div>
+            <div class="amt">${this.formatCurrency(m10)}</div>
+            <div style="font-size:10px; color:#636366; margin-top:2px;">Design & 3D sign-off</div>
+          </div>
+          <div class="doc-milestone-cell">
+            <div class="pct">40% Material Procurement</div>
+            <div class="amt">${this.formatCurrency(m40_1)}</div>
+            <div style="font-size:10px; color:#636366; margin-top:2px;">Factory Ply & Hardware</div>
+          </div>
+          <div class="doc-milestone-cell">
+            <div class="pct">40% Installation</div>
+            <div class="amt">${this.formatCurrency(m40_2)}</div>
+            <div style="font-size:10px; color:#636366; margin-top:2px;">On-site Carcass Fitting</div>
+          </div>
+          <div class="doc-milestone-cell">
+            <div class="pct">10% Final Handover</div>
+            <div class="amt">${this.formatCurrency(m10_2)}</div>
+            <div style="font-size:10px; color:#636366; margin-top:2px;">Final Polish & Cleaning</div>
+          </div>
+        </div>
+
+        <!-- TERMS & WARRANTY -->
+        <div class="doc-terms">
+          <strong>Terms & Scope:</strong><br>
+          1. Estimate validity: 15 days from issue date.<br>
+          2. Scope additions on-site will be billed separately with prior client sign-off.<br>
+          3. Guarantee: 10 Years Plywood Flat Warranty & 5 Years Soft-Close Hardware Warranty.
+        </div>
       `;
+    }
+
+    openQuotePreview(quoteId) {
+      const quote = this.quotes.find(q => q.id === (quoteId || this.activeQuoteId));
+      if (!quote) return;
+
+      if (this.inappQuoteDocument) {
+        this.inappQuoteDocument.innerHTML = this.generateQuoteDocumentHTML(quote);
+      }
+
+      this.openSheet(this.sheetQuotePreviewOverlay);
+    }
+
+    async shareQuotePDF(quoteId) {
+      const quote = this.quotes.find(q => q.id === (quoteId || this.activeQuoteId));
+      if (!quote) return;
+
+      this.showToast('📄 Generating PDF quote...', 'success');
+
+      // Create a temporary off-screen container for high-res A4 rendering
+      const exportContainer = document.createElement('div');
+      exportContainer.style.width = '750px';
+      exportContainer.style.padding = '24px';
+      exportContainer.style.background = '#ffffff';
+      exportContainer.style.color = '#1c1c1e';
+      exportContainer.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      exportContainer.innerHTML = this.generateQuoteDocumentHTML(quote);
+
+      exportContainer.style.position = 'fixed';
+      exportContainer.style.left = '-9999px';
+      exportContainer.style.top = '0';
+      document.body.appendChild(exportContainer);
+
+      const clientClean = (quote.clientName || 'Client').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const fileName = `Aakruthee_Quotation_${clientClean}.pdf`;
+
+      try {
+        if (typeof html2pdf !== 'undefined') {
+          const opt = {
+            margin: [8, 8, 8, 8],
+            filename: fileName,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          };
+
+          const pdfBlob = await html2pdf().from(exportContainer).set(opt).outputPdf('blob');
+          if (exportContainer.parentNode) document.body.removeChild(exportContainer);
+
+          const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+          if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+            await navigator.share({
+              files: [pdfFile],
+              title: `Aakruthee Quotation - ${quote.clientName}`,
+              text: `Interior Estimation Proposal for ${quote.projectName} from Aakruthee Interior Studio 🏡`
+            });
+            this.showToast('✓ PDF shared successfully!', 'success');
+          } else {
+            // Direct download fallback
+            const blobUrl = URL.createObjectURL(pdfBlob);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = blobUrl;
+            downloadLink.download = fileName;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            setTimeout(() => {
+              document.body.removeChild(downloadLink);
+              URL.revokeObjectURL(blobUrl);
+            }, 1000);
+            this.showToast('✓ PDF saved to device downloads!', 'success');
+          }
+        } else {
+          if (exportContainer.parentNode) document.body.removeChild(exportContainer);
+          this.printQuote(quote.id);
+        }
+      } catch (err) {
+        console.error('Error generating/sharing PDF:', err);
+        if (exportContainer.parentNode) document.body.removeChild(exportContainer);
+        this.printQuote(quote.id);
+      }
+    }
+
+    printQuote(quoteId) {
+      const quote = this.quotes.find(q => q.id === (quoteId || this.activeQuoteId));
+      if (!quote) return;
 
       if (this.printQuotationView) {
-        this.printQuotationView.innerHTML = printHtml;
+        this.printQuotationView.innerHTML = `
+          <div style="font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; max-width:800px; margin:0 auto; padding:24px; color:#1c1c1e;">
+            ${this.generateQuoteDocumentHTML(quote)}
+          </div>
+        `;
       }
       window.print();
     }

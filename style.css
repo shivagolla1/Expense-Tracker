@@ -1731,15 +1731,23 @@ input[type="time"]:focus {
   transition: var(--transition-apple);
 }
 
-.btn-quote-wa {
-  background: #25d366;
-  color: #ffffff;
-}
-
-.btn-quote-print {
+.btn-quote-preview {
   background: #f2f2f7;
   color: var(--apple-text);
   border: 1px solid var(--apple-border);
+}
+
+.btn-quote-preview:active {
+  background: #e5e5ea;
+}
+
+.btn-quote-share {
+  background: var(--apple-blue);
+  color: #ffffff;
+}
+
+.btn-quote-share:active {
+  background: #0060c2;
 }
 
 /* Rooms Section & Room Cards */
@@ -2212,15 +2220,231 @@ input[type="time"]:focus {
   transition: var(--transition-apple);
 }
 
-.btn-wa-quote {
-  background: #25d366;
-  color: #ffffff;
-}
-
-.btn-print-quote {
+.btn-preview-quote {
   background: #f2f2f7;
   color: var(--apple-text);
   border: 1px solid var(--apple-border);
+}
+
+.btn-preview-quote:active {
+  background: #e5e5ea;
+}
+
+.btn-share-quote {
+  background: var(--apple-blue);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 113, 227, 0.3);
+}
+
+.btn-share-quote:active {
+  background: #0060c2;
+  transform: scale(0.98);
+}
+
+/* ==========================================================================
+   IN-APP QUOTATION PREVIEW & PDF DOCUMENT STYLES
+   ========================================================================== */
+.sheet-preview-modal {
+  height: 92vh !important;
+  max-height: 92vh !important;
+}
+
+.preview-scroll-body {
+  padding: 12px 12px 40px;
+  background: #e5e5ea;
+  border-radius: 0 0 20px 20px;
+}
+
+.inapp-quote-document {
+  background: #ffffff;
+  color: #1c1c1e;
+  border-radius: 12px;
+  padding: 24px 20px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  line-height: 1.4;
+  margin: 0 auto;
+  max-width: 680px;
+}
+
+.doc-brand-header {
+  border-bottom: 2px solid var(--apple-blue);
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.doc-brand-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--apple-blue);
+  letter-spacing: -0.3px;
+  margin: 0 0 3px 0;
+}
+
+.doc-brand-sub {
+  font-size: 11px;
+  color: #636366;
+  line-height: 1.4;
+}
+
+.doc-meta-right {
+  text-align: right;
+}
+
+.doc-proposal-tag {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1c1c1e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.doc-meta-sub {
+  font-size: 11px;
+  color: #86868b;
+  margin-top: 3px;
+}
+
+.doc-client-card {
+  background: #f2f2f7;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.doc-client-card .lbl {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #86868b;
+  letter-spacing: 0.5px;
+}
+
+.doc-client-card .val {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1c1c1e;
+  margin-top: 2px;
+}
+
+.doc-client-card .sub {
+  font-size: 12px;
+  color: #636366;
+}
+
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  font-size: 12px;
+}
+
+.doc-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #86868b;
+  border-bottom: 2px solid #e5e5ea;
+}
+
+.doc-table .room-head-row td {
+  background: #f2f2f7;
+  font-weight: 700;
+  font-size: 13px;
+  color: #1c1c1e;
+  padding: 9px 10px;
+}
+
+.doc-table .room-head-row td.subtotal-col {
+  color: var(--apple-blue);
+  text-align: right;
+}
+
+.doc-table .item-row td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #f2f2f7;
+  color: #1c1c1e;
+  vertical-align: top;
+}
+
+.doc-table .item-row .item-spec {
+  font-size: 11px;
+  color: #636366;
+  margin-top: 2px;
+}
+
+.doc-commercials-box {
+  background: #f8f8fa;
+  border: 1px solid #e5e5ea;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+}
+
+.doc-commercial-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #636366;
+  margin-bottom: 6px;
+}
+
+.doc-commercial-line.total {
+  border-top: 1px solid #d1d1d6;
+  padding-top: 10px;
+  margin-top: 8px;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--apple-blue);
+}
+
+.doc-words-note {
+  font-size: 12px;
+  color: #86868b;
+  text-align: right;
+  margin-top: 3px;
+}
+
+.doc-milestones-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.doc-milestone-cell {
+  background: #f2f2f7;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.doc-milestone-cell .pct {
+  color: #86868b;
+  font-weight: 600;
+}
+
+.doc-milestone-cell .amt {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--apple-blue);
+  margin-top: 2px;
+}
+
+.doc-terms {
+  font-size: 10px;
+  color: #86868b;
+  border-top: 1px solid #e5e5ea;
+  padding-top: 12px;
+  line-height: 1.5;
 }
 
 /* Print Stylesheet for PDF & Paper Quotations */
