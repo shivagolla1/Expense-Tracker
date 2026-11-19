@@ -1167,7 +1167,7 @@
       }
       if (this.roomPresetsContainer) {
         this.roomPresetsContainer.addEventListener('click', (e) => {
-          const card = e.target.closest('.room-preset-card');
+          const card = e.target.closest('.room-preset-btn, .room-preset-card');
           if (card) {
             const name = card.getAttribute('data-room-name');
             const icon = card.getAttribute('data-room-icon');
@@ -2728,11 +2728,25 @@
 
     async handleNewQuoteSubmit(e) {
       e.preventDefault();
-      const clientName = document.getElementById('quote-client-name').value.trim();
-      const clientPhone = document.getElementById('quote-client-phone').value.trim();
-      const projectName = document.getElementById('quote-project-name').value.trim();
+      const clientEl = document.getElementById('quote-client-name') || document.getElementById('quote-input-client');
+      const phoneEl = document.getElementById('quote-client-phone') || document.getElementById('quote-input-phone');
+      const projEl = document.getElementById('quote-project-name') || document.getElementById('quote-input-project');
 
-      if (!clientName || !projectName) return;
+      const clientName = clientEl ? clientEl.value.trim() : '';
+      const clientPhone = phoneEl ? phoneEl.value.trim() : '';
+      const projectName = projEl ? projEl.value.trim() : '';
+
+      if (!clientName) {
+        alert('Please enter Client Name');
+        if (clientEl) clientEl.focus();
+        return;
+      }
+
+      if (!projectName) {
+        alert('Please enter Project / Property Name');
+        if (projEl) projEl.focus();
+        return;
+      }
 
       const newQuote = {
         id: 'quote-' + Date.now(),
@@ -2754,7 +2768,7 @@
       };
 
       await this.saveQuoteToCloud(newQuote);
-      this.formNewQuote.reset();
+      if (this.formNewQuote) this.formNewQuote.reset();
       this.closeSheet(this.sheetNewQuoteOverlay);
       this.openQuoteDetail(newQuote.id);
       this.showToast(`Started new quotation for ${clientName}`, 'success');
