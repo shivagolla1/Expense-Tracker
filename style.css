@@ -2447,7 +2447,7 @@ input[type="time"]:focus {
   line-height: 1.5;
 }
 
-/* Print Stylesheet for PDF & Paper Quotations */
+/* Print Stylesheet for Apple Native PDF & Paper Quotations */
 @media print {
   body {
     background: #ffffff !important;
@@ -2460,13 +2460,6 @@ input[type="time"]:focus {
   .apple-bottom-nav,
   .detail-top-nav,
   .quote-bottom-bar,
-  .room-card-add-btn,
-  .room-delete-btn,
-  .room-item-actions,
-  .apple-dashed-add-btn,
-  .apple-btn-secondary-sm,
-  .tax-toggle-row,
-  .form-group,
   .bottom-sheet-overlay,
   .privacy-shield,
   #apple-lock-screen,
@@ -2476,29 +2469,17 @@ input[type="time"]:focus {
   #view-tasks,
   #view-activity,
   #view-project-detail,
-  #view-quotes-hub {
+  #view-quotes-hub,
+  #view-quote-detail {
     display: none !important;
   }
 
-  #view-quote-detail {
+  #print-quotation-view {
     display: block !important;
     width: 100% !important;
     max-width: 100% !important;
     padding: 0 !important;
-  }
-
-  .quote-hero-card,
-  .quote-room-card,
-  .quote-commercials-card {
-    box-shadow: none !important;
-    border: 1px solid #cccccc !important;
-    page-break-inside: avoid;
-  }
-
-  .print-header-brand {
-    display: block !important;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #000;
-    padding-bottom: 10px;
+    margin: 0 !important;
+    background: #ffffff !important;
   }
 }

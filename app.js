@@ -3279,64 +3279,8 @@ Contact: +91 98765 43210`;
       this.openSheet(this.sheetQuotePreviewOverlay);
     }
 
-    async shareQuotePDF(quoteId) {
-      const quote = this.quotes.find(q => q.id === (quoteId || this.activeQuoteId));
-      if (!quote) return;
-
-      this.showToast('📄 Generating PDF quote...', 'success');
-
-      const clientClean = (quote.clientName || 'Client').replace(/[^a-zA-Z0-9_-]/g, '_');
-      const fileName = `Aakruthee_Quotation_${clientClean}.pdf`;
-      const docHtml = this.generateQuoteDocumentHTML(quote);
-
-      try {
-        if (typeof html2pdf !== 'undefined') {
-          const opt = {
-            margin: [8, 8, 8, 8],
-            filename: fileName,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0, scrollX: 0 },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-          };
-
-          const pdfBlob = await html2pdf().from(docHtml).set(opt).outputPdf('blob');
-
-          if (!pdfBlob || pdfBlob.size < 10000) {
-            console.warn('PDF blob unexpectedly small (' + (pdfBlob ? pdfBlob.size : 0) + ' bytes), falling back to print dialog');
-            this.printQuote(quote.id);
-            return;
-          }
-
-          const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
-
-          if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-            await navigator.share({
-              files: [pdfFile],
-              title: `Aakruthee Quotation - ${quote.clientName}`,
-              text: `Interior Estimation Proposal for ${quote.projectName} from Aakruthee Interior Studio 🏡`
-            });
-            this.showToast('✓ PDF shared successfully!', 'success');
-          } else {
-            // Direct download fallback
-            const blobUrl = URL.createObjectURL(pdfBlob);
-            const downloadLink = document.createElement('a');
-            downloadLink.href = blobUrl;
-            downloadLink.download = fileName;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            setTimeout(() => {
-              document.body.removeChild(downloadLink);
-              URL.revokeObjectURL(blobUrl);
-            }, 1000);
-            this.showToast('✓ PDF saved to device downloads!', 'success');
-          }
-        } else {
-          this.printQuote(quote.id);
-        }
-      } catch (err) {
-        console.error('Error generating/sharing PDF:', err);
-        this.printQuote(quote.id);
-      }
+    shareQuotePDF(quoteId) {
+      this.printQuote(quoteId);
     }
 
     printQuote(quoteId) {
