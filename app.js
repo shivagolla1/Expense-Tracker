@@ -3157,111 +3157,113 @@ Contact: +91 98765 43210`;
       const m10_2 = Math.max(0, net - m10 - m40_1 - m40_2);
 
       return `
-        <!-- BRAND HEADER -->
-        <div class="doc-brand-header">
-          <div>
-            <h1 class="doc-brand-title">AAKRUTHEE INTERIOR STUDIO</h1>
-            <div class="doc-brand-sub">
-              Bespoke Interior Architecture & Project Execution<br>
-              Hyderabad • Telangana • Contact: +91 98765 43210
+        <div class="inapp-quote-document" style="background:#ffffff; color:#1c1c1e; padding:20px; font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height:1.4; box-sizing:border-box; width:100%;">
+          <!-- BRAND HEADER -->
+          <div class="doc-brand-header" style="border-bottom:2px solid #0071e3; padding-bottom:14px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <h1 class="doc-brand-title" style="font-size:20px; font-weight:800; color:#0071e3; margin:0 0 3px 0; letter-spacing:-0.3px;">AAKRUTHEE INTERIOR STUDIO</h1>
+              <div class="doc-brand-sub" style="font-size:11px; color:#636366; line-height:1.4;">
+                Bespoke Interior Architecture & Project Execution<br>
+                Hyderabad • Telangana • Contact: +91 98765 43210
+              </div>
+            </div>
+            <div class="doc-meta-right" style="text-align:right;">
+              <div class="doc-proposal-tag" style="font-size:14px; font-weight:800; color:#1c1c1e; text-transform:uppercase; letter-spacing:0.5px;">Interior Estimate</div>
+              <div class="doc-meta-sub" style="font-size:11px; color:#86868b; margin-top:3px;">Date: ${dateStr}</div>
+              <div class="doc-meta-sub" style="font-size:11px; color:#86868b;">Ref: ${refId}</div>
             </div>
           </div>
-          <div class="doc-meta-right">
-            <div class="doc-proposal-tag">Interior Estimate</div>
-            <div class="doc-meta-sub">Date: ${dateStr}</div>
-            <div class="doc-meta-sub">Ref: ${refId}</div>
-          </div>
-        </div>
 
-        <!-- CLIENT & PROPERTY DETAILS -->
-        <div class="doc-client-card">
-          <div>
-            <div class="lbl">Client Information</div>
-            <div class="val">${this.escapeHTML(quote.clientName)}</div>
-            ${quote.clientPhone ? `<div class="sub">📞 ${this.escapeHTML(quote.clientPhone)}</div>` : ''}
-          </div>
-          <div style="text-align:right;">
-            <div class="lbl">Project Site</div>
-            <div class="val">${this.escapeHTML(quote.projectName)}</div>
-            <div class="sub">${quote.rooms ? quote.rooms.length : 0} Rooms Scheduled</div>
-          </div>
-        </div>
-
-        <!-- ROOM-BY-ROOM TABLE -->
-        <table class="doc-table">
-          <thead>
-            <tr>
-              <th style="width:30px;">#</th>
-              <th>Item Name</th>
-              <th colspan="2">Dimensions & Material Specs</th>
-              <th style="text-align:right;">Amount (₹)</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${roomsTableRows}
-          </tbody>
-        </table>
-
-        <!-- COMMERCIALS SUMMARY -->
-        <div class="doc-commercials-box">
-          <div class="doc-commercial-line">
-            <span>Gross Subtotal:</span>
-            <span style="font-weight:600; color:#1c1c1e;">${this.formatCurrency(gross)}</span>
-          </div>
-          ${discount > 0 ? `
-            <div class="doc-commercial-line" style="color:#ff3b30;">
-              <span>Special Studio Discount:</span>
-              <span style="font-weight:600;">-${this.formatCurrency(discount)}</span>
+          <!-- CLIENT & PROPERTY DETAILS -->
+          <div class="doc-client-card" style="background:#f2f2f7; border-radius:10px; padding:12px 16px; margin-bottom:18px; display:flex; justify-content:space-between; font-size:12px;">
+            <div>
+              <div class="lbl" style="font-size:10px; font-weight:700; text-transform:uppercase; color:#86868b; letter-spacing:0.5px;">Client Information</div>
+              <div class="val" style="font-size:15px; font-weight:700; color:#1c1c1e; margin-top:2px;">${this.escapeHTML(quote.clientName)}</div>
+              ${quote.clientPhone ? `<div class="sub" style="font-size:12px; color:#636366;">📞 ${this.escapeHTML(quote.clientPhone)}</div>` : ''}
             </div>
-          ` : ''}
-          ${quote.taxPercent > 0 ? `
-            <div class="doc-commercial-line">
-              <span>GST (18%):</span>
-              <span style="font-weight:600; color:#1c1c1e;">+${this.formatCurrency(taxAmount)}</span>
+            <div style="text-align:right;">
+              <div class="lbl" style="font-size:10px; font-weight:700; text-transform:uppercase; color:#86868b; letter-spacing:0.5px;">Project Site</div>
+              <div class="val" style="font-size:15px; font-weight:700; color:#1c1c1e; margin-top:2px;">${this.escapeHTML(quote.projectName)}</div>
+              <div class="sub" style="font-size:12px; color:#636366;">${quote.rooms ? quote.rooms.length : 0} Rooms Scheduled</div>
             </div>
-          ` : ''}
-          <div class="doc-commercial-line total">
-            <span>Final Project Estimate:</span>
-            <span>${this.formatCurrency(net)}</span>
           </div>
-          <div class="doc-words-note">
-            (${this.numberToWordsIndian(net)})
-          </div>
-        </div>
 
-        <!-- PAYMENT MILESTONES -->
-        <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#86868b; margin-bottom:8px; letter-spacing:0.5px;">
-          Milestone Payment Schedule
-        </div>
-        <div class="doc-milestones-grid">
-          <div class="doc-milestone-cell">
-            <div class="pct">10% Booking Advance</div>
-            <div class="amt">${this.formatCurrency(m10)}</div>
-            <div style="font-size:10px; color:#636366; margin-top:2px;">Design & 3D sign-off</div>
-          </div>
-          <div class="doc-milestone-cell">
-            <div class="pct">40% Material Procurement</div>
-            <div class="amt">${this.formatCurrency(m40_1)}</div>
-            <div style="font-size:10px; color:#636366; margin-top:2px;">Factory Ply & Hardware</div>
-          </div>
-          <div class="doc-milestone-cell">
-            <div class="pct">40% Installation</div>
-            <div class="amt">${this.formatCurrency(m40_2)}</div>
-            <div style="font-size:10px; color:#636366; margin-top:2px;">On-site Carcass Fitting</div>
-          </div>
-          <div class="doc-milestone-cell">
-            <div class="pct">10% Final Handover</div>
-            <div class="amt">${this.formatCurrency(m10_2)}</div>
-            <div style="font-size:10px; color:#636366; margin-top:2px;">Final Polish & Cleaning</div>
-          </div>
-        </div>
+          <!-- ROOM-BY-ROOM TABLE -->
+          <table class="doc-table" style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:12px;">
+            <thead>
+              <tr style="border-bottom:2px solid #e5e5ea; text-align:left;">
+                <th style="padding:8px 10px; font-size:10px; font-weight:700; text-transform:uppercase; color:#86868b; width:30px;">#</th>
+                <th style="padding:8px 10px; font-size:10px; font-weight:700; text-transform:uppercase; color:#86868b;">Item Name</th>
+                <th style="padding:8px 10px; font-size:10px; font-weight:700; text-transform:uppercase; color:#86868b;" colspan="2">Dimensions & Material Specs</th>
+                <th style="padding:8px 10px; font-size:10px; font-weight:700; text-transform:uppercase; color:#86868b; text-align:right;">Amount (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${roomsTableRows}
+            </tbody>
+          </table>
 
-        <!-- TERMS & WARRANTY -->
-        <div class="doc-terms">
-          <strong>Terms & Scope:</strong><br>
-          1. Estimate validity: 15 days from issue date.<br>
-          2. Scope additions on-site will be billed separately with prior client sign-off.<br>
-          3. Guarantee: 10 Years Plywood Flat Warranty & 5 Years Soft-Close Hardware Warranty.
+          <!-- COMMERCIALS SUMMARY -->
+          <div class="doc-commercials-box" style="background:#f8f8fa; border:1px solid #e5e5ea; border-radius:10px; padding:14px 16px; margin-bottom:18px;">
+            <div class="doc-commercial-line" style="display:flex; justify-content:space-between; font-size:13px; color:#636366; margin-bottom:6px;">
+              <span>Gross Subtotal:</span>
+              <span style="font-weight:600; color:#1c1c1e;">${this.formatCurrency(gross)}</span>
+            </div>
+            ${discount > 0 ? `
+              <div class="doc-commercial-line" style="display:flex; justify-content:space-between; font-size:13px; color:#ff3b30; margin-bottom:6px;">
+                <span>Special Studio Discount:</span>
+                <span style="font-weight:600;">-${this.formatCurrency(discount)}</span>
+              </div>
+            ` : ''}
+            ${quote.taxPercent > 0 ? `
+              <div class="doc-commercial-line" style="display:flex; justify-content:space-between; font-size:13px; color:#636366; margin-bottom:6px;">
+                <span>GST (18%):</span>
+                <span style="font-weight:600; color:#1c1c1e;">+${this.formatCurrency(taxAmount)}</span>
+              </div>
+            ` : ''}
+            <div class="doc-commercial-line total" style="display:flex; justify-content:space-between; border-top:1px solid #d1d1d6; padding-top:10px; margin-top:8px; font-size:17px; font-weight:800; color:#0071e3;">
+              <span>Final Project Estimate:</span>
+              <span>${this.formatCurrency(net)}</span>
+            </div>
+            <div class="doc-words-note" style="font-size:12px; color:#86868b; text-align:right; margin-top:3px;">
+              (${this.numberToWordsIndian(net)})
+            </div>
+          </div>
+
+          <!-- PAYMENT MILESTONES -->
+          <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#86868b; margin-bottom:8px; letter-spacing:0.5px;">
+            Milestone Payment Schedule
+          </div>
+          <div class="doc-milestones-grid" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin-bottom:18px;">
+            <div class="doc-milestone-cell" style="background:#f2f2f7; padding:10px 12px; border-radius:8px; font-size:11px;">
+              <div class="pct" style="color:#86868b; font-weight:600;">10% Booking Advance</div>
+              <div class="amt" style="font-size:14px; font-weight:700; color:#0071e3; margin-top:2px;">${this.formatCurrency(m10)}</div>
+              <div style="font-size:10px; color:#636366; margin-top:2px;">Design & 3D sign-off</div>
+            </div>
+            <div class="doc-milestone-cell" style="background:#f2f2f7; padding:10px 12px; border-radius:8px; font-size:11px;">
+              <div class="pct" style="color:#86868b; font-weight:600;">40% Material Procurement</div>
+              <div class="amt" style="font-size:14px; font-weight:700; color:#0071e3; margin-top:2px;">${this.formatCurrency(m40_1)}</div>
+              <div style="font-size:10px; color:#636366; margin-top:2px;">Factory Ply & Hardware</div>
+            </div>
+            <div class="doc-milestone-cell" style="background:#f2f2f7; padding:10px 12px; border-radius:8px; font-size:11px;">
+              <div class="pct" style="color:#86868b; font-weight:600;">40% Installation</div>
+              <div class="amt" style="font-size:14px; font-weight:700; color:#0071e3; margin-top:2px;">${this.formatCurrency(m40_2)}</div>
+              <div style="font-size:10px; color:#636366; margin-top:2px;">On-site Carcass Fitting</div>
+            </div>
+            <div class="doc-milestone-cell" style="background:#f2f2f7; padding:10px 12px; border-radius:8px; font-size:11px;">
+              <div class="pct" style="color:#86868b; font-weight:600;">10% Final Handover</div>
+              <div class="amt" style="font-size:14px; font-weight:700; color:#0071e3; margin-top:2px;">${this.formatCurrency(m10_2)}</div>
+              <div style="font-size:10px; color:#636366; margin-top:2px;">Final Polish & Cleaning</div>
+            </div>
+          </div>
+
+          <!-- TERMS & WARRANTY -->
+          <div class="doc-terms" style="font-size:10px; color:#86868b; border-top:1px solid #e5e5ea; padding-top:12px; line-height:1.5;">
+            <strong>Terms & Scope:</strong><br>
+            1. Estimate validity: 15 days from issue date.<br>
+            2. Scope additions on-site will be billed separately with prior client sign-off.<br>
+            3. Guarantee: 10 Years Plywood Flat Warranty & 5 Years Soft-Close Hardware Warranty.
+          </div>
         </div>
       `;
     }
@@ -3283,22 +3285,9 @@ Contact: +91 98765 43210`;
 
       this.showToast('📄 Generating PDF quote...', 'success');
 
-      // Create a temporary off-screen container for high-res A4 rendering
-      const exportContainer = document.createElement('div');
-      exportContainer.style.width = '750px';
-      exportContainer.style.padding = '24px';
-      exportContainer.style.background = '#ffffff';
-      exportContainer.style.color = '#1c1c1e';
-      exportContainer.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-      exportContainer.innerHTML = this.generateQuoteDocumentHTML(quote);
-
-      exportContainer.style.position = 'fixed';
-      exportContainer.style.left = '-9999px';
-      exportContainer.style.top = '0';
-      document.body.appendChild(exportContainer);
-
       const clientClean = (quote.clientName || 'Client').replace(/[^a-zA-Z0-9_-]/g, '_');
       const fileName = `Aakruthee_Quotation_${clientClean}.pdf`;
+      const docHtml = this.generateQuoteDocumentHTML(quote);
 
       try {
         if (typeof html2pdf !== 'undefined') {
@@ -3306,12 +3295,17 @@ Contact: +91 98765 43210`;
             margin: [8, 8, 8, 8],
             filename: fileName,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, logging: false },
+            html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0, scrollX: 0 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
           };
 
-          const pdfBlob = await html2pdf().from(exportContainer).set(opt).outputPdf('blob');
-          if (exportContainer.parentNode) document.body.removeChild(exportContainer);
+          const pdfBlob = await html2pdf().from(docHtml).set(opt).outputPdf('blob');
+
+          if (!pdfBlob || pdfBlob.size < 10000) {
+            console.warn('PDF blob unexpectedly small (' + (pdfBlob ? pdfBlob.size : 0) + ' bytes), falling back to print dialog');
+            this.printQuote(quote.id);
+            return;
+          }
 
           const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
 
@@ -3337,12 +3331,10 @@ Contact: +91 98765 43210`;
             this.showToast('✓ PDF saved to device downloads!', 'success');
           }
         } else {
-          if (exportContainer.parentNode) document.body.removeChild(exportContainer);
           this.printQuote(quote.id);
         }
       } catch (err) {
         console.error('Error generating/sharing PDF:', err);
-        if (exportContainer.parentNode) document.body.removeChild(exportContainer);
         this.printQuote(quote.id);
       }
     }
