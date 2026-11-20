@@ -900,6 +900,7 @@
       this.sheetQuotePreviewOverlay = document.getElementById('sheet-quote-preview-overlay');
       this.inappQuoteDocument = document.getElementById('inapp-quote-document');
       this.btnPreviewModalShare = document.getElementById('btn-preview-modal-share');
+      this.btnPreviewModalPrint = document.getElementById('btn-preview-modal-print');
       this.sheetNewQuoteOverlay = document.getElementById('sheet-new-quote-overlay');
       this.formNewQuote = document.getElementById('form-new-quote');
       this.sheetAddRoomOverlay = document.getElementById('sheet-add-room-overlay');
@@ -1267,13 +1268,28 @@
         this.btnBottomQuotePreview.addEventListener('click', () => this.openQuotePreview(this.activeQuoteId));
       }
       if (this.btnQuoteShare) {
-        this.btnQuoteShare.addEventListener('click', () => this.shareQuotePDF(this.activeQuoteId));
+        this.btnQuoteShare.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.shareQuotePDF(this.activeQuoteId);
+        });
       }
       if (this.btnBottomQuoteShare) {
-        this.btnBottomQuoteShare.addEventListener('click', () => this.shareQuotePDF(this.activeQuoteId));
+        this.btnBottomQuoteShare.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.shareQuotePDF(this.activeQuoteId);
+        });
       }
       if (this.btnPreviewModalShare) {
-        this.btnPreviewModalShare.addEventListener('click', () => this.shareQuotePDF(this.activeQuoteId));
+        this.btnPreviewModalShare.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.shareQuotePDF(this.activeQuoteId);
+        });
+      }
+      if (this.btnPreviewModalPrint) {
+        this.btnPreviewModalPrint.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.printQuote(this.activeQuoteId);
+        });
       }
       if (this.btnDeleteQuote) {
         this.btnDeleteQuote.addEventListener('click', () => this.deleteQuoteFromCloud(this.activeQuoteId));
@@ -3279,22 +3295,146 @@ Contact: +91 98765 43210`;
       this.openSheet(this.sheetQuotePreviewOverlay);
     }
 
-    shareQuotePDF(quoteId) {
-      this.printQuote(quoteId);
+    async shareQuotePDF(quoteId) {
+      const targetId = quoteId || this.activeQuoteId;
+      let quote = this.quotes.find(q => q.id === targetId);
+      if (!quote && this.quotes && this.quotes.length > 0) {
+        quote = this.quotes[0];
+      }
+      if (!quote) {
+        this.showToast('Please open or create a quotation first', 'error');
+        return;
+      }
+
+      this.showToast('📄 Preparing PDF quotation...', 'info');
+
+      const clientClean = (quote.clientName || 'Client').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const fileName = `Aakruthee_Quotation_${clientClean}.pdf`;
+      const docHtml = this.generateQuoteDocumentHTML(quote);
+
+      try {
+        if (typeof html2pdf !== 'undefined') {
+          const opt = {
+            margin: [8, 8, 8, 8],
+            filename: fileName,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0, scrollX: 0 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          };
+
+          const pdfBlob = await html2pdf().from(docHtml).set(opt).outputPdf('blob');
+
+          if (!pdfBlob || pdfBlob.size < 5000) {
+            console.warn('PDF blob generated is unexpectedly small (' + (pdfBlob ? pdfBlob.size : 0) + ' bytes), falling back to print view');
+            this.printQuote(quote.id);
+            return;
+          }
+
+          const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+          // Native Mobile / Apple Web Share API (WhatsApp, AirDrop, Messages, Save to Files)
+          if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+            try {
+              await navigator.share({
+                files: [pdfFile],
+                title: `Aakruthee Quotation - ${quote.clientName}`,
+                text: `Interior Estimation Proposal for ${quote.projectName} from Aakruthee Interior Studio 🏡`
+              });
+              this.showToast('✓ Quotation shared successfully!', 'success');
+              return;
+            } catch (shareErr) {
+              if (shareErr.name === 'AbortError') {
+                // User dismissed the iOS Share Sheet
+                return;
+              }
+              console.warn('Native share threw error, attempting file download fallback:', shareErr);
+            }
+          }
+
+          // Fallback: Direct Download
+          const blobUrl = URL.createObjectURL(pdfBlob);
+          const downloadLink = document.createElement('a');
+          downloadLink.href = blobUrl;
+          downloadLink.download = fileName;
+          downloadLink.target = '_blank';
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          setTimeout(() => {
+            if (downloadLink.parentNode) document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(blobUrl);
+          }, 3000);
+          this.showToast('✓ PDF saved to device Downloads!', 'success');
+        } else {
+          console.warn('html2pdf is not loaded, falling back to printQuote');
+          this.printQuote(quote.id);
+        }
+      } catch (err) {
+        console.error('Error generating/sharing PDF:', err);
+        this.showToast('Falling back to print view...', 'info');
+        this.printQuote(quote.id);
+      }
     }
 
     printQuote(quoteId) {
-      const quote = this.quotes.find(q => q.id === (quoteId || this.activeQuoteId));
-      if (!quote) return;
+      const targetId = quoteId || this.activeQuoteId;
+      let quote = this.quotes.find(q => q.id === targetId);
+      if (!quote && this.quotes && this.quotes.length > 0) {
+        quote = this.quotes[0];
+      }
+      if (!quote) {
+        this.showToast('Please open or create a quotation first', 'error');
+        return;
+      }
+
+      const docHtml = this.generateQuoteDocumentHTML(quote);
 
       if (this.printQuotationView) {
         this.printQuotationView.innerHTML = `
           <div style="font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; max-width:800px; margin:0 auto; padding:24px; color:#1c1c1e;">
-            ${this.generateQuoteDocumentHTML(quote)}
+            ${docHtml}
           </div>
         `;
       }
-      window.print();
+
+      const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+
+      if (isStandalone) {
+        // In iOS standalone PWA, window.print() is disabled by Apple WebKit.
+        // Opening a printable popup or triggering shareQuotePDF provides the native share/print route.
+        this.showToast('Opening print document...', 'info');
+        const printWin = window.open('', '_blank');
+        if (printWin) {
+          printWin.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Quotation - ${this.escapeHTML(quote.clientName)}</title>
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; margin: 0; padding: 20px; background: #fff; color: #1c1c1e; }
+                @media print { body { padding: 0; } }
+              </style>
+            </head>
+            <body>
+              ${docHtml}
+              <script>
+                window.onload = function() {
+                  setTimeout(function() { window.print(); }, 250);
+                };
+              <\/script>
+            </body>
+            </html>
+          `);
+          printWin.document.close();
+        } else {
+          // If popup is blocked by iOS WebKit, trigger shareQuotePDF which gives native Apple Share Sheet (AirPrint, WhatsApp, Files)
+          this.shareQuotePDF(quote.id);
+        }
+      } else {
+        setTimeout(() => {
+          window.print();
+        }, 200);
+      }
     }
 
     async saveQuoteToCloud(quote, silent = false) {

@@ -2447,6 +2447,10 @@ input[type="time"]:focus {
   line-height: 1.5;
 }
 
+#print-quotation-view {
+  display: none;
+}
+
 /* Print Stylesheet for Apple Native PDF & Paper Quotations */
 @media print {
   body {
